@@ -9,6 +9,19 @@
 
 library(shiny)
 library(quantmod)
+library(ggplot2)
+
+data<-read.csv2("./Data/RKI_COVID19_Berlin.csv", header=T, sep=",")
+##den folgenden code will ich als Plot rendern. hier tut er genau, was er soll - der output funktioniert aber noch nicht...
+zustand<-rep(c( "davon Todesfälle", "Infektionen"))
+zustand<-factor(zustand, levels = c("Infektionen", "davon Todesfälle" ))
+tod<-sum(data$AnzahlTodesfall[data$Altersgruppe=="A80+"])
+inf<-sum(data$AnzahlFall[data$Altersgruppe=="A80+"])
+zahlen<-rep(c(tod, inf-tod))
+frame<-data.frame(zustand, zahlen)
+ploty<-ggplot(frame, aes(fill=zustand, y=zahlen, x="A80+"))+  geom_bar(position='stack', stat='identity')
+ploty
+
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -26,8 +39,8 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-          textOutput("total"),
- 
+          textOutput("AlterString"),
+          plotOutput("test")
 
         )
     )
@@ -38,12 +51,8 @@ server <- function(input, output) {
  
   data<-read.csv2("./Data/RKI_COVID19_Berlin.csv", header=T, sep=",")
   
-  ageInput<-reactive({
-    if(input$Altersgruppe == 1) input$Altersgruppe<-"unbekannt"
-   if(input$Altersgruppe == 2) paste0("A00-A04")
-  })
 
-  output$total<-reactive({
+  output$AlterString<-reactive({
   if(input$Altersgruppe ==1) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "unbekannt"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="unbekannt"]))})
   else if(input$Altersgruppe ==2) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "A00-A04"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="A00-A04"]))})
   else if(input$Altersgruppe ==3) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "A05-A14"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="A05-A14"]))})
@@ -51,19 +60,21 @@ server <- function(input, output) {
   else if(input$Altersgruppe ==5) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "A35-A59"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="A35-A59"]))})
   else if(input$Altersgruppe ==6) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "A60-A79"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="A60-A79"]))})
   else if(input$Altersgruppe ==7) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "A80+"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="A80+"]))})
-   
-
   })
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white',
-             xlab = 'Waiting time to next eruption (in mins)',
-             main = 'Histogram of waiting times')
+    
+  plotAlter<-reactive({
+    if(input$Altersgruppe==7) ({
+      zustand<-rep(c( "davon Todesfälle", "Infektionen"))
+      zustand<-factor(zustand, levels = c("Infektionen", "davon Todesfälle" ))
+      tod<-sum(data$AnzahlTodesfall[data$Altersgruppe=="A80+"])
+      inf<-sum(data$AnzahlFall[data$Altersgruppe=="A80+"])
+      zahlen<-rep(c(tod, inf-tod))
+      frame<-data.frame(zustand, zahlen)
+      ploty<-ggplot(frame, aes(fill=zustand, y=zahlen, x="A80+"))+  geom_bar(position='stack', stat='identity')
+      return(ploty)
     })
+  output$test<-renderPlot({plotAlter()})
+  })
 }
 
 # Run the application 
