@@ -22,6 +22,7 @@ frame<-data.frame(zustand, zahlen)
 ploty<-ggplot(frame, aes(fill=zustand, y=zahlen, x="A80+"))+  geom_bar(position='stack', stat='identity')
 ploty
 
+plot(zahlen)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -39,8 +40,9 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-          textOutput("AlterString"),
-          plotOutput("test")
+          textOutput("TextAlter"),
+          plotOutput("VerhaeltnisAlter"),
+
 
         )
     )
@@ -48,21 +50,92 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
- 
+ library(ggplot2)
   data<-read.csv2("./Data/RKI_COVID19_Berlin.csv", header=T, sep=",")
   
 
-  output$AlterString<-reactive({
-  if(input$Altersgruppe ==1) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "unbekannt"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="unbekannt"]))})
-  else if(input$Altersgruppe ==2) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "A00-A04"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="A00-A04"]))})
-  else if(input$Altersgruppe ==3) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "A05-A14"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="A05-A14"]))})
-  else if(input$Altersgruppe ==4) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "A15-A34"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="A15-A34"]))})
-  else if(input$Altersgruppe ==5) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "A35-A59"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="A35-A59"]))})
-  else if(input$Altersgruppe ==6) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "A60-A79"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="A60-A79"]))})
-  else if(input$Altersgruppe ==7) ({paste("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", sum(data$AnzahlFall[data$Altersgruppe == "A80+"]), "davon Todesfälle: ",  sum(data$AnzahlTodesfall[data$NeuerTodesfall==0 & data$Altersgruppe=="A80+"]))})
+  var_age<-reactive({
+    if(input$Altersgruppe ==1)({
+    return (c(sum(data$AnzahlFall[data$Altersgruppe=="unbekannt"]),sum(data$AnzahlTodesfall[data$Altersgruppe=="unbekannt"])))
+    })
+    if(input$Altersgruppe ==2)({
+      return (c(sum(data$AnzahlFall[data$Altersgruppe=="A00-A04"]),sum(data$AnzahlTodesfall[data$Altersgruppe=="A00-A04"])))
+    })
+    if(input$Altersgruppe ==3)({
+      return (c(sum(data$AnzahlFall[data$Altersgruppe=="A05-A14"]),sum(data$AnzahlTodesfall[data$Altersgruppe=="A05-A14"])))
+    })
+    if(input$Altersgruppe ==4)({
+      return (c(sum(data$AnzahlFall[data$Altersgruppe=="A15-A34"]),sum(data$AnzahlTodesfall[data$Altersgruppe=="A15-A34"])))
+    })
+    if(input$Altersgruppe ==5)({
+      return (c(sum(data$AnzahlFall[data$Altersgruppe=="A35-A59"]),sum(data$AnzahlTodesfall[data$Altersgruppe=="A35-A59"])))
+    })
+    if(input$Altersgruppe ==6)({
+      return (c(sum(data$AnzahlFall[data$Altersgruppe=="A60-A79"]),sum(data$AnzahlTodesfall[data$Altersgruppe=="A60-A79"])))
+    })
+    if(input$Altersgruppe ==7)({
+      return (c(sum(data$AnzahlFall[data$Altersgruppe=="A80+"]),sum(data$AnzahlTodesfall[data$Altersgruppe=="A80+"])))
+    })
   })
-    
+  
+  output$TextAlter<-renderText({paste0("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", var_age()[1], " davon Todesfälle: ",  var_age()[2])})
+  
+
   plotAlter<-reactive({
+    if(input$Altersgruppe==1) ({
+      zustand<-rep(c( "davon Todesfälle", "Infektionen"))
+      zustand<-factor(zustand, levels = c("Infektionen", "davon Todesfälle" ))
+      tod<-sum(data$AnzahlTodesfall[data$Altersgruppe=="unbekannt"])
+      inf<-sum(data$AnzahlFall[data$Altersgruppe=="unbekannt"])
+      zahlen<-rep(c(tod, inf-tod))
+      frame<-data.frame(zustand, zahlen)
+      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="Alter unbekannt"))+  geom_bar(position='stack', stat='identity'))
+    })
+    if(input$Altersgruppe==2) ({
+      zustand<-rep(c( "davon Todesfälle", "Infektionen"))
+      zustand<-factor(zustand, levels = c("Infektionen", "davon Todesfälle" ))
+      tod<-sum(data$AnzahlTodesfall[data$Altersgruppe=="A00-A04"])
+      inf<-sum(data$AnzahlFall[data$Altersgruppe=="A00-A04"])
+      zahlen<-rep(c(tod, inf-tod))
+      frame<-data.frame(zustand, zahlen)
+      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="Alter unbekannt"))+  geom_bar(position='stack', stat='identity'))
+    })
+    if(input$Altersgruppe==3) ({
+      zustand<-rep(c( "davon Todesfälle", "Infektionen"))
+      zustand<-factor(zustand, levels = c("Infektionen", "davon Todesfälle" ))
+      tod<-sum(data$AnzahlTodesfall[data$Altersgruppe=="A05-A14"])
+      inf<-sum(data$AnzahlFall[data$Altersgruppe=="A05-A14"])
+      zahlen<-rep(c(tod, inf-tod))
+      frame<-data.frame(zustand, zahlen)
+      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="Alter unbekannt"))+  geom_bar(position='stack', stat='identity'))
+    })
+    if(input$Altersgruppe==4) ({
+      zustand<-rep(c( "davon Todesfälle", "Infektionen"))
+      zustand<-factor(zustand, levels = c("Infektionen", "davon Todesfälle" ))
+      tod<-sum(data$AnzahlTodesfall[data$Altersgruppe=="A15-A34"])
+      inf<-sum(data$AnzahlFall[data$Altersgruppe=="A15-A34"])
+      zahlen<-rep(c(tod, inf-tod))
+      frame<-data.frame(zustand, zahlen)
+      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="Alter unbekannt"))+  geom_bar(position='stack', stat='identity'))
+    })
+    if(input$Altersgruppe==5) ({
+      zustand<-rep(c( "davon Todesfälle", "Infektionen"))
+      zustand<-factor(zustand, levels = c("Infektionen", "davon Todesfälle" ))
+      tod<-sum(data$AnzahlTodesfall[data$Altersgruppe=="A35-A59"])
+      inf<-sum(data$AnzahlFall[data$Altersgruppe=="A35-A59"])
+      zahlen<-rep(c(tod, inf-tod))
+      frame<-data.frame(zustand, zahlen)
+      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="Alter unbekannt"))+  geom_bar(position='stack', stat='identity'))
+    })
+    if(input$Altersgruppe==6) ({
+      zustand<-rep(c( "davon Todesfälle", "Infektionen"))
+      zustand<-factor(zustand, levels = c("Infektionen", "davon Todesfälle" ))
+      tod<-sum(data$AnzahlTodesfall[data$Altersgruppe=="A60-A79"])
+      inf<-sum(data$AnzahlFall[data$Altersgruppe=="A60-A79"])
+      zahlen<-rep(c(tod, inf-tod))
+      frame<-data.frame(zustand, zahlen)
+      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="Alter unbekannt"))+  geom_bar(position='stack', stat='identity'))
+    })
     if(input$Altersgruppe==7) ({
       zustand<-rep(c( "davon Todesfälle", "Infektionen"))
       zustand<-factor(zustand, levels = c("Infektionen", "davon Todesfälle" ))
@@ -70,11 +143,13 @@ server <- function(input, output) {
       inf<-sum(data$AnzahlFall[data$Altersgruppe=="A80+"])
       zahlen<-rep(c(tod, inf-tod))
       frame<-data.frame(zustand, zahlen)
-      ploty<-ggplot(frame, aes(fill=zustand, y=zahlen, x="A80+"))+  geom_bar(position='stack', stat='identity')
-      return(ploty)
+      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="A80+"))+  geom_bar(position='stack', stat='identity'))
     })
-  output$test<-renderPlot({plotAlter()})
+
   })
+  
+  
+  output$VerhaeltnisAlter<-renderPlot({plotAlter()})
 }
 
 # Run the application 
