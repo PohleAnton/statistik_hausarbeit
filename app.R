@@ -122,6 +122,8 @@ server <- function(input, output) {
     })
   })
   
+  ##die y-Achsen sind hier unterschiedlich! Ich weiß nicht so recht, wie damit anders umzugehen - immerhin ist eines 
+  ##ein ganzzahliges Vielfaches..
   output$impfungen_woche<-renderPlot(barplot(main="Anzahl Impfungen in dieser KW",var_jahr()[2],ylim=c(0,270000)))
   output$faelle_woche<-renderPlot(barplot(main="Anzahl Infektionen in dieser KW",var_jahr()[1],ylim=c(0,90000)))
                              
