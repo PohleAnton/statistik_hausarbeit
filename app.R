@@ -56,13 +56,37 @@ data22$woche<-strftime(data22$Meldedatum, format="%V")
 ##remove leading zeros von "woche":
 data22$woche<-sub("^0+","",data22$woche)
 
-sum(impf21$Anzahl[])
-barplot(sum(impf21$Anzahl[impf21$woche==15]),ylim=c(0,300000))
-
-sum(impf21$Anzahl[impf21$woche=="05"])
 
 ##es wird im weiteren nach totalen Impfdosen verabreicht ermittelt, nicht nach Anzahl der erhaltenen Impfungen
 ##2020 wird wegen den quasi noch nicht verfügbaren Impfdosen nicht beachtet
+
+
+##fallzahlen/impfdosen werden pro woche aggregiert:
+##(https://stackoverflow.com/questions/10202480/aggregate-rows-by-shared-values-in-a-variable)
+agg21_data<-aggregate(data21$AnzahlFall, by=list(data21$woche), FUN=sum)
+agg21_death<-aggregate(data21$AnzahlTodesfall, by=list(data21$woche), FUN=sum)
+agg21_impf<-aggregate(impf21$Anzahl, by=list(impf21$woche), FUN=sum)
+
+agg22_data<-aggregate(data22$AnzahlFall, by=list(data22$woche), FUN=sum)
+agg22_death<-aggregate(data22$AnzahlTodesfall, by=list(data22$woche), FUN=sum)
+agg22_impf<-aggregate(impf22$Anzahl, by=list(impf22$woche), FUN=sum)
+
+##just to check
+abh<-lm(agg21_death$x~agg21_impf$x)
+summary(abh)
+##R-squared ist 0.17 - das ist weniger als ich dachte, aber auch irgendwie keine kleinigkeit
+
+
+##diese werte könnten als maximum für die y-achse im barplot benutzt werden
+max_data21<-max(agg21_data[2])
+max_death21<-max(agg21_death[2])
+max_impf21<-max(agg21_impf[2])
+max_impf22<-max(agg22_impf[2])
+max_death22<-max(agg22_death[2])
+max_data22<-max(agg22_data[2])
+
+
+
 
 
 
@@ -94,10 +118,11 @@ ui <- fluidPage(
     ),
 
 mainPanel(
-  plotOutput("VerhaeltnisAlter"),
   textOutput("TextAlter"),
+  plotOutput("VerhaeltnisAlter"),
   plotOutput("impfungen_woche"),
-  plotOutput("faelle_woche")
+  plotOutput("faelle_woche"),
+  plotOutput("tode_woche")
   
 
 
@@ -109,23 +134,25 @@ server <- function(input, output) {
     return(input$Woche)
   })
   
-  ##gibt den Datensatz für das gewählte Kalenderjahr zurück:
-  ##gibt einen vektor mit 2 datensätzen zurück:
-  ##var_jahr()[1]: der gesamtdatensatz mit wochen
-  ##var_jahr()[2]: die impfdaten mit wochen
+  
+  ##gibt einen vektor mit 3 Summen zurück:
+  ##var_jahr()[1]: die Fälle pro Woche
+  ##var_jahr()[2]: die todesfälle pro woche
+  ##var_jahr()[3]: die impfungen pro wochen
   var_jahr<-reactive({
     if(input$Jahr==1)({
-      return (c(sum(data21$AnzahlFall[data21$woche==var_woche()]), sum(impf21$Anzahl[impf21$woche==var_woche()])))
+      return (c(sum(data21$AnzahlFall[data21$woche==var_woche()]), sum (data21$AnzahlTodesfall[data21$woche==var_woche()]), sum(impf21$Anzahl[impf21$woche==var_woche()])))
     })
     if(input$Jahr==2)({
-      return (c(sum(data22$AnzahlFall[data22$woche==var_woche()]), sum(impf22$Anzahl[impf22$woche==var_woche()])))
+      return (c(sum(data22$AnzahlFall[data22$woche==var_woche()]), sum (data22$AnzahlTodesfall[data22$woche==var_woche()]), sum(impf22$Anzahl[impf22$woche==var_woche()])))
     })
   })
   
-  ##die y-Achsen sind hier unterschiedlich! Ich weiß nicht so recht, wie damit anders umzugehen - immerhin ist eines 
-  ##ein ganzzahliges Vielfaches..
-  output$impfungen_woche<-renderPlot(barplot(main="Anzahl Impfungen in dieser KW",var_jahr()[2],ylim=c(0,270000)))
-  output$faelle_woche<-renderPlot(barplot(main="Anzahl Infektionen in dieser KW",var_jahr()[1],ylim=c(0,90000)))
+  ##die y-Achsen sind hier unterschiedlich! Ich weiß nicht so recht, wie damit umzugehen - aktuell ist das 
+  ##maximum immer der maximal vorkommende wert - so verhalten sich immerhin alle 3 Plots zu ihrem maximum (also quasi zu 100%)
+  output$impfungen_woche<-renderPlot(barplot(main="Anzahl Impfungen in dieser KW",var_jahr()[3],ylim=c(0,max(max_impf21, max_impf22))))
+  output$tode_woche<-renderPlot(barplot(main="Anzahl Todesfälle in dieser KW",var_jahr()[2],ylim=c(0,max(max_death21, max_death22))))
+  output$faelle_woche<-renderPlot(barplot(main="Anzahl Infektionen in dieser KW",var_jahr()[1],ylim=c(0,max(max_data21, max_data22))))
                              
   ##gibt reduzierte Datensätze zurück - im jeweiligen Zeitraum war die Variante mit >50% vertreten
   var_variant<-reactive({
