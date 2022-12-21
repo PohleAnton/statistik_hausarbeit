@@ -85,10 +85,37 @@ max_impf22<-max(agg22_impf[2])
 max_death22<-max(agg22_death[2])
 max_data22<-max(agg22_data[2])
 
+## aus den Daten für 21 erstelle ich ein Subset, welches nur die Todesfälle und die Altersgruppe gegenüberstellt
+data21AgeDeath <- data21[, c('Altersgruppe', 'AnzahlTodesfall')]
 
+## hier wird aus dem o. g. subset ein auf die altersgruppe aggregierter, nun sinnvoller data frame erstellt
+df21AgeDeath <- aggregate(x = data21AgeDeath$AnzahlTodesfall, by = list(data21AgeDeath$Altersgruppe), FUN = sum)
 
+## these 2 above for 2022:
+data22AgeDeath <- data22[, c('Altersgruppe', 'AnzahlTodesfall')]
+df22AgeDeath <- aggregate(x = data22AgeDeath$AnzahlTodesfall, by = list(data22AgeDeath$Altersgruppe), FUN = sum)
 
+## vorbereitung um dasselbe für 2020 zu machen:
+## Daten gesamt in 2021
+data20 <- data[data$Meldedatum <= '2020-12-31',]
+data20$woche <- strftime(data20$Meldedatum, format = "%V")
 
+## fordere Nullen von "woche" löschen:
+data20$woche<-sub("^0+","",data20$woche)
+
+## und nun dasselbe für 20 wie bei 21 und 22:
+data20AgeDeath <- data20[, c('Altersgruppe', 'AnzahlTodesfall')]
+df20AgeDeath <- aggregate(x = data20AgeDeath$AnzahlTodesfall, by = list(data20AgeDeath$Altersgruppe), FUN = sum)
+
+## ein paar wichtige fakten:
+## tode insgesamt 20:
+deaths20 <- sum(df20AgeDeath$x)
+
+## tode insgesamt 21:
+deaths21 <- sum(df21AgeDeath$x)
+
+## tode insgesamt 22:
+deaths22 <- sum(df22AgeDeath$x)
 
 ## gemäß
 ## https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/VOC_VOI_Tabelle.xlsx?__blob=publicationFile
@@ -102,6 +129,8 @@ data_urtyp<-data[data$Meldedatum < '2021-03-01',]
 data_alpha<-data[data$Meldedatum > '2021-02-28' & data$Meldedatum < '2021-06-21',]
 data_delta<-data[data$Meldedatum > '2021-06-21' & data$Meldedatum < '2021-12-27',]
 data_ominkron<-data[data$Meldedatum > '2021-12-26',]
+
+
 
 
 # Define UI for application that draws a histogram
