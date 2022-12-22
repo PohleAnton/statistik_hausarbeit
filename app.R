@@ -30,18 +30,20 @@ impfungen<-read.csv2("./Data/impfungen.csv", header = T, sep = ",")
 ##Impfungen in Berlin:
 ##hier wird nur der Landkreis des Impfortes angegeben, nicht der Meldeadresse der geimpften Person. (Vermutlich aus Datenschutzgründen)
 impfungen_b<-impfungen[impfungen$BundeslandId_Impfort==11,]
-
+## return: data als alle covid-daten (mit dates als typ date), impfungen als alle impfdaten, impfungen_b als alle impfdaten für berlin (die für uns relevanten daten)
 
 
 
 
 ## AUFBEREITEN VON GRUNDDATEN FUER 2020 (ohne Impfungen, da kaum welche stattgefunden haben)
 ## Daten gesamt in 2020
-data20 <- data[data$Meldedatum < '2021-01-01',]
-data20$woche <- strftime(data20$Meldedatum, format = "%V")
+data20 <- data[data$Refdatum < '2021-01-01',]
+data20$woche <- strftime(data20$Refdatum, format = "%V")
 
 ## fordere Nullen von "woche" löschen:
 data20$woche<-sub("^0+","",data20$woche)
+## return: data20 als alle covid daten für 2020 - (mit wochenangaben)
+
 
 
 
@@ -55,11 +57,11 @@ impf21$woche<-strftime(impf21$Impfdatum, format="%V")
 ##remove leading zeros von "woche":
 impf21$woche<-sub("^0+","",impf21$woche)
 ##Daten gesamt in 2021
-data21<-data[data$Meldedatum>'2020-12-31' & data$Meldedatum<'2022-01-01',]
-data21$woche<-strftime(data21$Meldedatum, format="%V")
+data21<-data[data$Refdatum>'2020-12-31' & data$Refdatum<'2022-01-01',]
+data21$woche<-strftime(data21$Refdatum, format="%V")
 ##remove leading zeros von "woche":
 data21$woche<-sub("^0+","",data21$woche)
-
+## return: impf21 als alle impfdaten für 2021, data21 als alle covid daten für 2021 - (beide mit wochenangaben)
 
 
 
@@ -73,11 +75,13 @@ impf22$woche<-strftime(impf22$Impfdatum, format="%V")
 ##remove leading zeros von "woche":
 impf22$woche<-sub("^0+","",impf22$woche)
 ##Daten gesamt in 2022
-data22<-data[data$Meldedatum>'2021-12-31',]
+data22<-data[data$Refdatum>'2021-12-31' & data$Refdatum<'2023-01-01',]
 ##fügt eine Wochenspalte hinzu
-data22$woche<-strftime(data22$Meldedatum, format="%V")
+data22$woche<-strftime(data22$Refdatum, format="%V")
 ##remove leading zeros von "woche":
 data22$woche<-sub("^0+","",data22$woche)
+## return: impf22 als alle impfdaten für 2022, data22 als alle covid daten für 2022 - (beide mit wochenangaben)
+
 
 
 
@@ -85,7 +89,6 @@ data22$woche<-sub("^0+","",data22$woche)
 
 ##es wird im weiteren nach totalen Impfdosen verabreicht ermittelt, nicht nach Anzahl der erhaltenen Impfungen
 ##2020 wird wegen den quasi noch nicht verfügbaren Impfdosen nicht beachtet
-
 
 ##fallzahlen/impfdosen werden pro woche aggregiert:
 ##(https://stackoverflow.com/questions/10202480/aggregate-rows-by-shared-values-in-a-variable)
@@ -115,6 +118,7 @@ max_data22<-max(agg22_data[2])
 
 
 
+## UNTERTEILUNG DER COVID DATEN IN DIE VERSCHIEDENEN COVID-VARIANTEN (ausgehend von den Zeitraeumen in denen jeweilige Variante vorherrschend war)
 ## gemäß
 ## https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/VOC_VOI_Tabelle.xlsx?__blob=publicationFile
 ## wird folgendes angenommen:
@@ -123,10 +127,10 @@ max_data22<-max(agg22_data[2])
 ## ab KW52/2021: Omikron- vorerst keine weitere Unterscheidung der Subtypen
 ##vorherrschend heißt >50%
 
-data_urtyp<-data[data$Meldedatum < '2021-03-01',]
-data_alpha<-data[data$Meldedatum > '2021-02-28' & data$Meldedatum < '2021-06-21',]
-data_delta<-data[data$Meldedatum > '2021-06-21' & data$Meldedatum < '2021-12-27',]
-data_ominkron<-data[data$Meldedatum > '2021-12-26',]
+data_urtyp<-data[data$Refdatum < '2021-03-01',]
+data_alpha<-data[data$Refdatum > '2021-02-28' & data$Refdatum < '2021-06-21',]
+data_delta<-data[data$Refdatum > '2021-06-21' & data$Refdatum < '2021-12-27',]
+data_ominkron<-data[data$Refdatum > '2021-12-26',]
 
 
 
