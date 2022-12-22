@@ -12,7 +12,7 @@ library(quantmod)
 library(ggplot2)
 
 
-##geschieht außerhalb der Anwendung für die Performance
+##geschieht außerhalb der Anwendung für die Performance und weil all das nur einmal durchgegangen werden muss
 data<-read.csv2("./Data/RKI_COVID19_Berlin.csv", header=T, sep=",")
 ##Transformiert diese beiden Spalten in Datumsformat, damit Vergleiche angesellt werden können:
 data$Meldedatum<-as.Date(data$Meldedatum)
@@ -85,6 +85,21 @@ max_impf22<-max(agg22_impf[2])
 max_death22<-max(agg22_death[2])
 max_data22<-max(agg22_data[2])
 
+
+## gemäß
+## https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/VOC_VOI_Tabelle.xlsx?__blob=publicationFile
+## wird folgendes angenommen:
+## KW09/2021-KW24/2021: Alpha ist vorherrschend
+## KW25/2021-KW51/2021: Delta ist vorherrschend
+## ab KW52/2021: Omikron- vorerst keine weitere Unterscheidung der Subtypen
+##vorherrschend heißt >50%
+
+data_urtyp<-data[data$Meldedatum < '2021-03-01',]
+data_alpha<-data[data$Meldedatum > '2021-02-28' & data$Meldedatum < '2021-06-21',]
+data_delta<-data[data$Meldedatum > '2021-06-21' & data$Meldedatum < '2021-12-27',]
+data_ominkron<-data[data$Meldedatum > '2021-12-26',]
+
+## age - death korrelation ---------------------------------------------------------------------------------------
 ## aus den Daten für 21 erstelle ich ein Subset, welches nur die Todesfälle und die Altersgruppe gegenüberstellt
 data21AgeDeath <- data21[, c('Altersgruppe', 'AnzahlTodesfall')]
 
@@ -96,8 +111,8 @@ data22AgeDeath <- data22[, c('Altersgruppe', 'AnzahlTodesfall')]
 df22AgeDeath <- aggregate(x = data22AgeDeath$AnzahlTodesfall, by = list(data22AgeDeath$Altersgruppe), FUN = sum)
 
 ## vorbereitung um dasselbe für 2020 zu machen:
-## Daten gesamt in 2021
-data20 <- data[data$Meldedatum <= '2020-12-31',]
+## Daten gesamt in 2020
+data20 <- data[data$Meldedatum < '2021-01-01',]
 data20$woche <- strftime(data20$Meldedatum, format = "%V")
 
 ## fordere Nullen von "woche" löschen:
@@ -117,19 +132,22 @@ deaths21 <- sum(df21AgeDeath$x)
 ## tode insgesamt 22:
 deaths22 <- sum(df22AgeDeath$x)
 
-## gemäß
-## https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/VOC_VOI_Tabelle.xlsx?__blob=publicationFile
-## wird folgendes angenommen:
-## KW09/2021-KW24/2021: Alpha ist vorherrschend
-## KW25/2021-KW51/2021: Delta ist vorherrschend
-## ab KW52/2021: Omikron- vorerst keine weitere Unterscheidung der Subtypen
-##vorherrschend heißt >50%
+## 7-tage inzidenz ---------------------------------------------------------------------------------------------
+## zuerst wird ein subset, mit ausschließelich datum und anzErkrankungen erstellt
+## ich verwende hierfür das referenzdatum, da dieses versucht zu schätzen, wann die jeweilige person erkrankt ist
+## dadurch entstehen natürlich kleine, jedoch nachzuverlässigende ungenauigkeiten
+dateInfizierte20 <- data20[ , c('Refdatum', 'AnzahlFall')]
 
-data_urtyp<-data[data$Meldedatum < '2021-03-01',]
-data_alpha<-data[data$Meldedatum > '2021-02-28' & data$Meldedatum < '2021-06-21',]
-data_delta<-data[data$Meldedatum > '2021-06-21' & data$Meldedatum < '2021-12-27',]
-data_ominkron<-data[data$Meldedatum > '2021-12-26',]
+dateInfizierte21 <- data21[ , c('Refdatum', 'AnzahlFall')]
 
+dateInfizierte22 <- data22[ , c('Refdatum', 'AnzahlFall')]
+
+## die daten zu datum - erkrankungen werden nun nach datum aggregiert
+df20dateInfizierte <- aggregate(AnzahlFall ~ Refdatum, FUN = sum, data=dateInfizierte20)
+
+df21dateInfizierte <- aggregate(AnzahlFall ~ Refdatum, FUN = sum, data=dateInfizierte21)
+
+df22dateInfizierte <- aggregate(AnzahlFall ~ Refdatum, FUN = sum, data=dateInfizierte22)
 
 
 
