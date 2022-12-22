@@ -12,11 +12,13 @@ library(quantmod)
 library(ggplot2)
 
 
+
+## AUFBEREITUNG DER GRUNDDATEN
 ##geschieht außerhalb der Anwendung für die Performance und weil all das nur einmal durchgegangen werden muss
 data<-read.csv2("./Data/RKI_COVID19_Berlin.csv", header=T, sep=",")
 ##Transformiert diese beiden Spalten in Datumsformat, damit Vergleiche angesellt werden können:
 data$Meldedatum<-as.Date(data$Meldedatum)
-data$Refdatum<-as.Date(data$Refdatum)
+data$Refdatum<-as.Date(data$Refdatum) 
 
 ##Daten über die Impfkampangne vom RKI, sortiert nach bundesländern:
 ##https://github.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/blob/master/Aktuell_Deutschland_Bundeslaender_COVID-19-Impfungen.csv
@@ -29,6 +31,23 @@ impfungen<-read.csv2("./Data/impfungen.csv", header = T, sep = ",")
 ##hier wird nur der Landkreis des Impfortes angegeben, nicht der Meldeadresse der geimpften Person. (Vermutlich aus Datenschutzgründen)
 impfungen_b<-impfungen[impfungen$BundeslandId_Impfort==11,]
 
+
+
+
+
+## AUFBEREITEN VON GRUNDDATEN FUER 2020 (ohne Impfungen, da kaum welche stattgefunden haben)
+## Daten gesamt in 2020
+data20 <- data[data$Meldedatum < '2021-01-01',]
+data20$woche <- strftime(data20$Meldedatum, format = "%V")
+
+## fordere Nullen von "woche" löschen:
+data20$woche<-sub("^0+","",data20$woche)
+
+
+
+
+
+## AUFBEREITEN VON GRUNDDATEN FUER 2021
 ##in 2021 
 impf21<-impfungen_b[impfungen_b$Impfdatum>'2020-12-31' & impfungen_b$Impfdatum<'2022-01-01',]
 ##fügt wochenspalte hinzu
@@ -43,6 +62,10 @@ data21$woche<-sub("^0+","",data21$woche)
 
 
 
+
+
+
+## AUFBEREITEN VON GRUNDDATEN FUER 2022
 ##in 2022
 impf22<-impfungen_b[impfungen_b$Impfdatum>'2021-12-31',]
 ##fügt eine wochenspaltehinzu
@@ -55,6 +78,9 @@ data22<-data[data$Meldedatum>'2021-12-31',]
 data22$woche<-strftime(data22$Meldedatum, format="%V")
 ##remove leading zeros von "woche":
 data22$woche<-sub("^0+","",data22$woche)
+
+
+
 
 
 ##es wird im weiteren nach totalen Impfdosen verabreicht ermittelt, nicht nach Anzahl der erhaltenen Impfungen
@@ -86,6 +112,9 @@ max_death22<-max(agg22_death[2])
 max_data22<-max(agg22_data[2])
 
 
+
+
+
 ## gemäß
 ## https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/VOC_VOI_Tabelle.xlsx?__blob=publicationFile
 ## wird folgendes angenommen:
@@ -99,7 +128,11 @@ data_alpha<-data[data$Meldedatum > '2021-02-28' & data$Meldedatum < '2021-06-21'
 data_delta<-data[data$Meldedatum > '2021-06-21' & data$Meldedatum < '2021-12-27',]
 data_ominkron<-data[data$Meldedatum > '2021-12-26',]
 
-## age - death korrelation ---------------------------------------------------------------------------------------
+
+
+
+
+## UNTERSUCHUNG: KORELLATION ZWISCHEN ALTER UND TODESFAELLEN
 ## aus den Daten für 21 erstelle ich ein Subset, welches nur die Todesfälle und die Altersgruppe gegenüberstellt
 data21AgeDeath <- data21[, c('Altersgruppe', 'AnzahlTodesfall')]
 
@@ -110,13 +143,7 @@ df21AgeDeath <- aggregate(x = data21AgeDeath$AnzahlTodesfall, by = list(data21Ag
 data22AgeDeath <- data22[, c('Altersgruppe', 'AnzahlTodesfall')]
 df22AgeDeath <- aggregate(x = data22AgeDeath$AnzahlTodesfall, by = list(data22AgeDeath$Altersgruppe), FUN = sum)
 
-## vorbereitung um dasselbe für 2020 zu machen:
-## Daten gesamt in 2020
-data20 <- data[data$Meldedatum < '2021-01-01',]
-data20$woche <- strftime(data20$Meldedatum, format = "%V")
 
-## fordere Nullen von "woche" löschen:
-data20$woche<-sub("^0+","",data20$woche)
 
 ## und nun dasselbe für 20 wie bei 21 und 22:
 data20AgeDeath <- data20[, c('Altersgruppe', 'AnzahlTodesfall')]
