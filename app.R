@@ -240,6 +240,8 @@ maxMeldeRefDiscrepency <- max(meldeRefDiscrepency)
 
 
 
+
+## SHINY LOGIC:
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
@@ -264,6 +266,10 @@ mainPanel(
 
 ))
 
+
+
+
+
 server <- function(input, output) {
   
   var_Woche<-reactive({
@@ -276,23 +282,23 @@ server <- function(input, output) {
   ##var_jahr()[2]: die todesfälle pro Woche
   ##var_jahr()[3]: die impfungen pro Wochen
   var_jahr<-reactive({
-    if(input$Jahr==1)({
-      return (c(sum(data21$AnzahlFall[data21$Woche==var_Woche()]), sum (data21$AnzahlTodesfall[data21$Woche==var_Woche()]), sum(impf21$Anzahl[impf21$Woche==var_Woche()])))
-    })
-    if(input$Jahr==2)({
-      return (c(sum(data22$AnzahlFall[data22$Woche==var_Woche()]), sum (data22$AnzahlTodesfall[data22$Woche==var_Woche()]), sum(impf22$Anzahl[impf22$Woche==var_Woche()])))
-    })
+    switch(
+      as.character(input$Jahr),
+      "1" = return (c(sum(data21$AnzahlFall[data21$Woche==var_Woche()]), sum (data21$AnzahlTodesfall[data21$Woche==var_Woche()]), sum(impf21$Anzahl[impf21$Woche==var_Woche()]))),
+      "2" = return (c(sum(data22$AnzahlFall[data22$Woche==var_Woche()]), sum (data22$AnzahlTodesfall[data22$Woche==var_Woche()]), sum(impf22$Anzahl[impf22$Woche==var_Woche()])))
+    )
   })
+  
   
   ##die y-Achsen sind hier unterschiedlich! Ich weiß nicht so recht, wie damit umzugehen - aktuell ist das 
   ##maximum immer der maximal vorkommende wert - so verhalten sich immerhin alle 3 Plots zu ihrem maximum (also quasi zu 100%)
   output$impfungen_Woche<-renderPlot(barplot(main="Anzahl Impfungen in dieser KW",var_jahr()[3],ylim=c(0,max(maxImpfPerWeek21, maxImpfPerWeek22))))
   output$tode_Woche<-renderPlot(barplot(main="Anzahl Todesfälle in dieser KW",var_jahr()[2],ylim=c(0,max(maxDeathsPerWeek21, maxDeathsPerWeek22))))
   output$faelle_Woche<-renderPlot(barplot(main="Anzahl Infektionen in dieser KW",var_jahr()[1],ylim=c(0,max(maxCasesPerWeek21, maxCasesPerWeek22))))
-                             
+      
+                         
   ##gibt reduzierte Datensätze zurück - im jeweiligen Zeitraum war die Variante mit >50% vertreten
   var_variant<-reactive({
-    
     switch(
       as.character(input$Variante),
       "1" = return (data_urtyp),
@@ -300,7 +306,6 @@ server <- function(input, output) {
       "3" = return (data_delta),
       "4" = return (data_ominkron),
       "5" = return (data))
-
   })
 
   
@@ -337,48 +342,31 @@ server <- function(input, output) {
   
 
   plotAlter<-reactive({
+    
     zustand<-rep(c( "davon Todesfälle", "Infektionen"))
     zustand<-factor(zustand, levels = c("Infektionen", "davon Todesfälle" ))
-    if(input$Altersgruppe==1) ({
-      zahlen<-rep(c(var_age()[2], var_age()[1]))
-      frame<-data.frame(zustand, zahlen)
-      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="Alter unbekannt"))+  geom_bar(position='fill', stat='identity'))
+    
+    minuend <- var_age()[2] ## vor dem return wird innerhalb der variable zahlen, minus diese variable gerechnet
+    
+    if (input$Altersgruppe == 1) ({
+      minuend <- 0; ## im Fall Altergruppse == 1 wird nichts Minusgerechnet (war in Antons code zumindest so)
     })
-    if(input$Altersgruppe==2) ({
-      zahlen<-rep(c(var_age()[2], var_age()[1]-var_age()[2]))
-      frame<-data.frame(zustand, zahlen)
-      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="0 - 4"))+  geom_bar(position='stack', stat='identity'))
-    })
-    if(input$Altersgruppe==3) ({
-      zahlen<-rep(c(var_age()[2], var_age()[1]-var_age()[2]))
-      frame<-data.frame(zustand, zahlen)
-      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="05-14"))+  geom_bar(position='stack', stat='identity'))
-    })
-    if(input$Altersgruppe==4) ({
-      zahlen<-rep(c(var_age()[2], var_age()[1]-var_age()[2]))
-      frame<-data.frame(zustand, zahlen)
-      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="15 - 34"))+  geom_bar(position='stack', stat='identity'))
-    })
-    if(input$Altersgruppe==5) ({
-      zahlen<-rep(c(var_age()[2], var_age()[1]-var_age()[2]))
-      frame<-data.frame(zustand, zahlen)
-      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="35-59"))+  geom_bar(position='stack', stat='identity'))
-    })
-    if(input$Altersgruppe==6) ({
-      zahlen<-rep(c(var_age()[2], var_age()[1]-var_age()[2]))
-      frame<-data.frame(zustand, zahlen)
-      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="60 bis 79 "))+  geom_bar(position='stack', stat='identity'))
-    })
-    if(input$Altersgruppe==7) ({
-      zahlen<-rep(c(var_age()[2], var_age()[1]-var_age()[2]))
-      frame<-data.frame(zustand, zahlen)
-      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="80+"))+  geom_bar(position='stack', stat='identity'))
-    })
-    if(input$Altersgruppe==8) ({
-      zahlen<-rep(c(var_age()[2], var_age()[1]-var_age()[2]))
-      frame<-data.frame(zustand, zahlen)
-      return (ggplot(frame, aes(fill=zustand, y=zahlen, x="Gesamt"))+  geom_bar(position='stack', stat='identity'))
-    })
+    
+    stringAltersrange <- switch(
+      as.character(input$Altersgruppe),
+      "1" = "Alter unbekannt",
+      "2" = "0 - 4",
+      "3" = "05-14",
+      "4" = "15 - 34",
+      "5" = "35-59",
+      "6" = "60 bis 79",
+      "7" = "80+",
+      "8" = "Gesamt"
+    )
+    
+    zahlen<-rep(c(var_age()[2], var_age()[1]-minuend))
+    frame<-data.frame(zustand, zahlen)
+    return (ggplot(frame, aes(fill=zustand, y=zahlen, x=stringAltersrange))+  geom_bar(position='stack', stat='identity'))
 
   })
   
