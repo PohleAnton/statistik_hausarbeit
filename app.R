@@ -292,51 +292,45 @@ server <- function(input, output) {
                              
   ##gibt reduzierte Datensätze zurück - im jeweiligen Zeitraum war die Variante mit >50% vertreten
   var_variant<-reactive({
-    if(input$Variante==1)({
-      return (data_urtyp)
-    })
-    if(input$Variante==2)({
-      return (data_alpha)
-    })
-    if(input$Variante==3)({
-      return (data_delta)
-    })
-    if(input$Variante==4)({
-      return (data_ominkron)
-    })
-    if(input$Variante==5)({
-      return (data)
-    })
+    
+    switch(
+      as.character(input$Variante),
+      "1" = return (data_urtyp),
+      "2" = return (data_alpha),
+      "3" = return (data_delta),
+      "4" = return (data_ominkron),
+      "5" = return (data))
+
   })
 
   
   ##dieser Funktion gibt Werte in Abhängigkeit des  gewählten Altes aus - ich schlage vor, dass weitere altersabhängige Werte ebenfalls hier erfasst werden - solange die Reihenfolge erhalten bleibt, sollte das kein Problem sein.
   ##aktuell gibt var_age()[1] die Fallzahl abhängig vom Alter, var_age()[2] die Anzahl der Todesfälle abhängig vom Alter zurück. Ggf. in diesem Stil weiter dokumentieren
   var_age<-reactive({
-    if(input$Altersgruppe ==1)({
-    return (c(sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="unbekannt"]),sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="unbekannt"]),signif((sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="unbekannt"])/sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="unbekannt"]))*100,digits=6)))
+    
+    digitVal <- 3
+    
+    if(input$Altersgruppe == 1)({
+      digitVal <- 6
     })
-    if(input$Altersgruppe ==2)({
-      return (c(sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="A00-A04"]),sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="A00-A04"]),signif((sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="A00-A04"])/sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="A00-A04"]))*100,digits=3)))
+    
+    if(input$Altersgruppe == 8)({
+      return (c(sum(var_variant()$AnzahlFall),sum(var_variant()$AnzahlTodesfall), signif((sum(var_variant()$AnzahlTodesfall)/sum(var_variant()$AnzahlFall))*100,digits=digitVal)))
     })
-    if(input$Altersgruppe ==3)({
-      return (c(sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="A05-A14"]),sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="A05-A14"]),signif((sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="A05-A14"])/sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="A05-A14"]))*1000,digits=3)))
-    })
-    if(input$Altersgruppe ==4)({
-      return (c(sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="A15-A34"]),sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="A15-A34"]),signif((sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="A15-A34"])/sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="A15-A34"]))*1000,digits=3)))
-    })
-    if(input$Altersgruppe ==5)({
-      return (c(sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="A35-A59"]),sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="A35-A59"]),signif((sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="A35-A59"])/sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="A35-A59"]))*100,digits=3)))
-    })
-    if(input$Altersgruppe ==6)({
-      return (c(sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="A60-A79"]),sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="A60-A79"]), signif((sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="A60-A79"])/sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="A60-A79"]))*100,digits=3)))
-    })
-    if(input$Altersgruppe ==7)({
-      return (c(sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="A80+"]),sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="A80+"]), signif((sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe=="A80+"])/sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe=="A80+"]))*100,digits=3)))
-    })
-    if(input$Altersgruppe ==8)({
-      return (c(sum(var_variant()$AnzahlFall),sum(var_variant()$AnzahlTodesfall), signif((sum(var_variant()$AnzahlTodesfall)/sum(var_variant()$AnzahlFall))*100,digits=3)))
-    })
+
+    stringAltersgruppe <- switch(
+      as.character(input$Altersgruppe),
+      "1" = "unbekannt",
+      "2" = "A00-A04",
+      "3" = "A05-A14",
+      "4" = "A15-A34",
+      "5" = "A35-A59",
+      "6" = "A60-A79",
+      "7" = "A80+"
+    )
+    
+    return (c(sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe==stringAltersgruppe]),sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe==stringAltersgruppe]),signif((sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe==stringAltersgruppe])/sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe==stringAltersgruppe]))*100,digits=digitVal)))
+
   })
   
   output$TextAlter<-renderText({paste0("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", var_age()[1], " davon Todesfälle: ",  var_age()[2], " (",var_age()[3],"%)") })
@@ -387,7 +381,6 @@ server <- function(input, output) {
     })
 
   })
-  
   
   output$VerhaeltnisAlter<-renderPlot({plotAlter()})
 }
