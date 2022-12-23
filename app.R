@@ -19,6 +19,8 @@ data<-read.csv2("./Data/RKI_COVID19_Berlin.csv", header=T, sep=",")
 ##Transformiert diese beiden Spalten in Datumsformat, damit Vergleiche angesellt werden können:
 data$Meldedatum<-as.Date(data$Meldedatum)
 data$Refdatum<-as.Date(data$Refdatum) 
+## Die daten werden nun nach dem referenzdatum sortiert
+data <- data[order(data$Refdatum),]
 
 ##Daten über die Impfkampangne vom RKI, sortiert nach bundesländern:
 ##https://github.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/blob/master/Aktuell_Deutschland_Bundeslaender_COVID-19-Impfungen.csv
@@ -57,7 +59,6 @@ impf20$Woche<-sub("^0+","",impf20$Woche)
 ## Daten gesamt in 2020
 data20 <- data[data$Refdatum < '2021-01-01',]
 data20$Woche <- strftime(data20$Refdatum, format = "%V")
-
 ## fordere Nullen von "Woche" löschen:
 data20$Woche<-sub("^0+","",data20$Woche)
 ## return: impf20 als alle impfdaten für 2020, data20 als alle covid daten für 2020 - (beide mit Wochenangaben)
@@ -226,6 +227,13 @@ data_ominkron<-data[data$Refdatum > '2021-12-26',]
 
 
 
+
+
+
+## UNTERSUCHUNG: DISKREPANZ ZWISCHEN MELDEDATUM UND REFERENZDATUM (ERKRANKUNGSBEGINN)
+meldeRefDiscrepency <- data$Meldedatum - data$Refdatum
+## maxDiscrepency
+maxMeldeRefDiscrepency <- max(meldeRefDiscrepency)
 
 
 
