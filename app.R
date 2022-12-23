@@ -255,16 +255,14 @@ ui <- fluidPage(
       radioButtons("Jahr", label="Welches Kalenderjahr soll betrachtet werden?", choices=list("2021"=1, "2022"=2), selected=1)
     ),
 
-mainPanel(
-  textOutput("TextAlter"),
-  plotOutput("VerhaeltnisAlter"),
-  plotOutput("impfungen_Woche"),
-  plotOutput("faelle_Woche"),
-  plotOutput("tode_Woche")
-  
-
-
-))
+  mainPanel(
+    textOutput("TextAlter"),
+    plotOutput("VerhaeltnisAlter"),
+    plotOutput("impfungen_Woche"),
+    plotOutput("faelle_Woche"),
+    plotOutput("tode_Woche")
+  )
+)
 
 
 
@@ -305,7 +303,8 @@ server <- function(input, output) {
       "2" = return (data_alpha),
       "3" = return (data_delta),
       "4" = return (data_ominkron),
-      "5" = return (data))
+      "5" = return (data)
+      )
   })
 
   
@@ -364,7 +363,7 @@ server <- function(input, output) {
       "8" = "Gesamt"
     )
     
-    zahlen<-rep(c(var_age()[2], var_age()[1]-minuend))
+    zahlen<-rep(c(var_age()[2], var_age()[1]-minuend)) ## für minuend, siehe variable oben
     frame<-data.frame(zustand, zahlen)
     return (ggplot(frame, aes(fill=zustand, y=zahlen, x=stringAltersrange))+  geom_bar(position='stack', stat='identity'))
 
