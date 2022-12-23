@@ -36,93 +36,181 @@ impfungen_b<-impfungen[impfungen$BundeslandId_Impfort==11,]
 
 
 
-## AUFBEREITEN VON GRUNDDATEN FUER 2020 - (hinzufuegen einer wochen-spalte)
+
+## GRUNDSAETZLICHE FESTLEGUNGEN:
+## Wenn wir Covid Faelle untersuchen, gehen wir immer vom Refdatum aus
+## Wenn wir Impfungen untersuchen, danach aggregieren etc. verwenden wir imemr die totalen Impfdosen verabreicht, nicht die Anzahl der erhaltenen Impfungen
+
+
+
+
+
+
+
+## AUFBEREITEN VON GRUNDDATEN FUER 2020 - (hinzufuegen einer Wochen-spalte)
+##in 2020
+impf20<-impfungen_b[impfungen_b$Impfdatum < '2021-01-01',]
+##fügt Wochenspalte hinzu
+impf20$Woche<-strftime(impf20$Impfdatum, format="%V")
+##remove leading zeros von "Woche":
+impf20$Woche<-sub("^0+","",impf20$Woche)
 ## Daten gesamt in 2020
 data20 <- data[data$Refdatum < '2021-01-01',]
-data20$woche <- strftime(data20$Refdatum, format = "%V")
+data20$Woche <- strftime(data20$Refdatum, format = "%V")
 
-## fordere Nullen von "woche" löschen:
-data20$woche<-sub("^0+","",data20$woche)
-## return: data20 als alle covid daten für 2020 - (mit wochenangaben)
-
-
+## fordere Nullen von "Woche" löschen:
+data20$Woche<-sub("^0+","",data20$Woche)
+## return: impf20 als alle impfdaten für 2020, data20 als alle covid daten für 2020 - (beide mit Wochenangaben)
 
 
 
 
-## AUFBEREITEN VON GRUNDDATEN FUER 2021 - (hinzufuegen einer wochen-spalte)
+
+
+## AUFBEREITEN VON GRUNDDATEN FUER 2021 - (hinzufuegen einer Wochen-spalte)
 ##in 2021 
 impf21<-impfungen_b[impfungen_b$Impfdatum>'2020-12-31' & impfungen_b$Impfdatum<'2022-01-01',]
-##fügt wochenspalte hinzu
-impf21$woche<-strftime(impf21$Impfdatum, format="%V")
-##remove leading zeros von "woche":
-impf21$woche<-sub("^0+","",impf21$woche)
+##fügt Wochenspalte hinzu
+impf21$Woche<-strftime(impf21$Impfdatum, format="%V")
+##remove leading zeros von "Woche":
+impf21$Woche<-sub("^0+","",impf21$Woche)
 ##Daten gesamt in 2021
 data21<-data[data$Refdatum>'2020-12-31' & data$Refdatum<'2022-01-01',]
-data21$woche<-strftime(data21$Refdatum, format="%V")
-##remove leading zeros von "woche":
-data21$woche<-sub("^0+","",data21$woche)
-## return: impf21 als alle impfdaten für 2021, data21 als alle covid daten für 2021 - (beide mit wochenangaben)
+data21$Woche<-strftime(data21$Refdatum, format="%V")
+##remove leading zeros von "Woche":
+data21$Woche<-sub("^0+","",data21$Woche)
+## return: impf21 als alle impfdaten für 2021, data21 als alle covid daten für 2021 - (beide mit Wochenangaben)
 
 
 
 
 
-## AUFBEREITEN VON GRUNDDATEN FUER 2022 - (hinzufuegen einer wochen-spalte)
+
+## AUFBEREITEN VON GRUNDDATEN FUER 2022 - (hinzufuegen einer Wochen-spalte)
 ##in 2022
 impf22<-impfungen_b[impfungen_b$Impfdatum>'2021-12-31',]
-##fügt eine wochenspaltehinzu
-impf22$woche<-strftime(impf22$Impfdatum, format="%V")
-##remove leading zeros von "woche":
-impf22$woche<-sub("^0+","",impf22$woche)
+##fügt eine Wochenspaltehinzu
+impf22$Woche<-strftime(impf22$Impfdatum, format="%V")
+##remove leading zeros von "Woche":
+impf22$Woche<-sub("^0+","",impf22$Woche)
 ##Daten gesamt in 2022
 data22<-data[data$Refdatum>'2021-12-31' & data$Refdatum<'2023-01-01',]
 ##fügt eine Wochenspalte hinzu
-data22$woche<-strftime(data22$Refdatum, format="%V")
-##remove leading zeros von "woche":
-data22$woche<-sub("^0+","",data22$woche)
-## return: impf22 als alle impfdaten für 2022, data22 als alle covid daten für 2022 - (beide mit wochenangaben)
+data22$Woche<-strftime(data22$Refdatum, format="%V")
+##remove leading zeros von "Woche":
+data22$Woche<-sub("^0+","",data22$Woche)
+## return: impf22 als alle impfdaten für 2022, data22 als alle covid daten für 2022 - (beide mit Wochenangaben)
 
 
 
 
 
 
-## AUFSTELLEN VON TABELLN ZU: FAELLE PRO TAG/WOCHE, TODE PRO TAG/WOCHE, IMPFUNGEN PRO TAG/WOCHE + ERMITTELN VON MAXIMALWERTEN
-
-##es wird im weiteren nach totalen Impfdosen verabreicht ermittelt, nicht nach Anzahl der erhaltenen Impfungen
-
-##fallzahlen/tode/impfdosen werden pro woche/tag aggregiert:
+## FUNKTIONSWEISE AGGREGATION:
 ##(https://stackoverflow.com/questions/10202480/aggregate-rows-by-shared-values-in-a-variable)
-aggCasesPerWeek_21data<-aggregate(AnzahlFall~woche, FUN=sum, data = data21)
-aggDeathsPerWeek_21data<-aggregate(AnzahlTodesfall~woche, FUN=sum, data = data21)
-aggImpfPerWeek_21data<-aggregate(Anzahl~woche, FUN=sum, data = impf21)
 
-aggCasesPerWeek_22data<-aggregate(AnzahlFall~woche, FUN=sum, data = data22)
-aggDeathsPerWeek_22data<-aggregate(AnzahlTodesfall~woche, FUN=sum, data = data22)
-aggImpfPerWeek_22data<-aggregate(Anzahl~woche, FUN=sum, data = impf22)
 
-##just to check
-abh<-lm(aggDeathsPerWeek_21data$AnzahlTodesfall~aggImpfPerWeek_21data$Anzahl)
+
+
+
+
+## UNTERSUCHUNG: FAELLE PRO TAG/WOCHE FUER 20/21/22 (+ Ermittlung von Maximalwerten):
+## 2020
+aggCasesPerDay20 <- aggregate(AnzahlFall ~ Refdatum, FUN = sum, data = data20)
+aggCasesPerWeek20 <- aggregate(AnzahlFall ~ Woche, FUN = sum, data = data20)
+
+maxCasesPerDay20 <- max(aggCasesPerDay20$AnzahlFall)
+maxCasesPerWeek20 <- max(aggCasesPerWeek20$AnzahlFall)
+
+## 2021
+aggCasesPerDay21 <- aggregate(AnzahlFall ~ Refdatum, FUN = sum, data = data21)
+aggCasesPerWeek21 <- aggregate(AnzahlFall ~ Woche, FUN = sum, data = data21)
+
+maxCasesPerDay21 <- max(aggCasesPerDay21$AnzahlFall)
+maxCasesPerWeek21 <- max(aggCasesPerWeek21$AnzahlFall)
+
+## 2022
+aggCasesPerDay22<-aggregate(AnzahlFall ~ Refdatum, FUN = sum, data = data22)
+aggCasesPerWeek22<-aggregate(AnzahlFall ~ Woche, FUN = sum, data = data22)
+
+maxCasesPerDay22 <- max(aggCasesPerDay22$AnzahlFall)
+maxCasesPerWeek22 <- max(aggCasesPerWeek22$AnzahlFall)
+
+
+
+
+
+
+
+## UNTERSUCHUNG: TODE PRO TAG/WOCHE FUER 20/21/22 (+ Ermittlung von Maximalwerten):
+## 2020
+aggDeathsPerDay20 <- aggregate(AnzahlTodesfall ~ Refdatum, FUN = sum, data = data20)
+aggDeathsPerWeek20 <- aggregate(AnzahlTodesfall ~ Woche, FUN = sum, data = data20)
+
+maxDeathsPerDay20 <- max(aggDeathsPerDay20$AnzahlTodesfall)
+maxDeathsPerWeek20 <- max(aggDeathsPerWeek20$AnzahlTodesfall)
+
+## 2021
+aggDeathsPerDay21 <- aggregate(AnzahlTodesfall ~ Refdatum, FUN = sum, data = data21)
+aggDeathsPerWeek21 <- aggregate(AnzahlTodesfall ~ Woche, FUN = sum, data = data21)
+
+maxDeathsPerDay21 <- max(aggDeathsPerDay21$AnzahlTodesfall)
+maxDeathsPerWeek21 <- max(aggDeathsPerWeek21$AnzahlTodesfall)
+
+## 2022
+aggDeathsPerDay22<-aggregate(AnzahlTodesfall ~ Refdatum, FUN = sum, data = data22)
+aggDeathsPerWeek22<-aggregate(AnzahlTodesfall ~ Woche, FUN = sum, data = data22)
+
+maxDeathsPerDay22 <- max(aggDeathsPerDay22$AnzahlTodesfall)
+maxDeathsPerWeek22 <- max(aggDeathsPerWeek22$AnzahlTodesfall)
+
+
+
+
+
+
+
+## UNTERSUCHUNG: IMPFUNGEN PRO TAG/WOCHE FUER 20/21/22 (+ Ermittlung von Maximalwerten):
+## 2020
+aggImpfsPerDay20 <- aggregate(Anzahl ~ Impfdatum, FUN = sum, data = impf20)
+aggImpfsPerWeek20 <- aggregate(Anzahl ~ Woche, FUN = sum, data = impf20)
+
+maxImpfsPerDay20 <- max(aggImpfsPerDay20$Anzahl)
+maxImpfsPerWeek20 <- max(aggImpfsPerWeek20$Anzahl)
+
+## 2021
+aggImpfsPerDay21 <- aggregate(Anzahl ~ Impfdatum, FUN = sum, data = impf21)
+aggImpfsPerWeek21 <- aggregate(Anzahl ~ Woche, FUN = sum, data = impf21)
+
+maxImpfsPerDay21 <- max(aggImpfsPerDay21$Anzahl)
+maxImpfsPerWeek21 <- max(aggImpfsPerWeek21$Anzahl)
+
+## 2022
+aggImpfsPerDay22<-aggregate(Anzahl ~ Impfdatum, FUN = sum, data = impf22)
+aggImpfsPerWeek22<-aggregate(Anzahl ~ Woche, FUN = sum, data = impf22)
+
+maxImpfsPerDay22 <- max(aggImpfsPerDay22$Anzahl)
+maxImpfsPerWeek22 <- max(aggImpfsPerWeek22$Anzahl)
+
+
+
+
+
+
+
+## JUST TO CHECK
+abh<-lm(aggDeathsPerWeek21$AnzahlTodesfall~aggImpfsPerWeek21$Anzahl)
 summary(abh)
 ##R-squared ist 0.17 - das ist weniger als ich dachte, aber auch irgendwie keine kleinigkeit
 
 
-##diese werte könnten als maximum für die y-achse im barplot benutzt werden
-maxCasesPerWeek21<-max(aggCasesPerWeek_21data[2])
-maxDeathsPerWeek21<-max(aggDeathsPerWeek_21data[2])
-maxImpfPerWeek21<-max(aggImpfPerWeek_21data[2])
-
-maxCasesPerWeek22<-max(aggCasesPerWeek_22data[2])
-maxDeathsPerWeek22<-max(aggDeathsPerWeek_22data[2])
-maxImpfPerWeek22<-max(aggImpfPerWeek_22data[2])
 
 
 
 
 
 
-## UNTERTEILUNG DER COVID DATEN IN DIE VERSCHIEDENEN COVID-VARIANTEN (ausgehend von den Zeitraeumen in denen jeweilige Variante vorherrschend war)
+## UNTERTEILUNG DER COVID DATEN IN DIE VERSCHIEDENEN COVID-VARIANTEN (ausgehend von den Zeitraeumen, in denen jeweilige Variante vorherrschend war)
 ## gemäß
 ## https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/VOC_VOI_Tabelle.xlsx?__blob=publicationFile
 ## wird folgendes angenommen:
@@ -142,23 +230,6 @@ data_ominkron<-data[data$Refdatum > '2021-12-26',]
 
 
 
-## 7-tage inzidenz ---------------------------------------------------------------------------------------------
-## zuerst wird ein subset, mit ausschließelich datum und anzErkrankungen erstellt
-## ich verwende hierfür das referenzdatum, da dieses versucht zu schätzen, wann die jeweilige person erkrankt ist
-## dadurch entstehen natürlich kleine, jedoch nachzuverlässigende ungenauigkeiten
-dateInfizierte20 <- data20[ , c('Refdatum', 'AnzahlFall')]
-
-dateInfizierte21 <- data21[ , c('Refdatum', 'AnzahlFall')]
-
-dateInfizierte22 <- data22[ , c('Refdatum', 'AnzahlFall')]
-
-## die daten zu datum - erkrankungen werden nun nach datum aggregiert
-df20dateInfizierte <- aggregate(AnzahlFall ~ Refdatum, FUN = sum, data=dateInfizierte20)
-
-df21dateInfizierte <- aggregate(AnzahlFall ~ Refdatum, FUN = sum, data=dateInfizierte21)
-
-df22dateInfizierte <- aggregate(AnzahlFall ~ Refdatum, FUN = sum, data=dateInfizierte22)
-
 
 
 # Define UI for application that draws a histogram
@@ -170,16 +241,16 @@ ui <- fluidPage(
     sidebarPanel(
       selectInput("Altersgruppe", label="Wählen Sie eine Altersgruppe", choices = list("unbekannt"=1, "0 bis 4 Jahre"=2,"5 bis 14 Jahre"=3, "15 bis 34 Jahre"=4,"35 bis 59 Jahre"=5,"60 bis 79 Jahre"=6,"über 80 Jahre"=7, "Gesamt"=8), selected = 8),
       radioButtons("Variante", label="Welche Virusvariante soll betrachtet werden?", choices = list("Urtyp"=1, "Alpha"=2, "Delta"=3, "Omikron"=4, "Alle zusammen"=5), selected = 5),
-      sliderInput(inputId="Woche", label="Kalenderwoche", min=1, max=53, value=1),
+      sliderInput(inputId="Woche", label="KalenderWoche", min=1, max=53, value=1),
       radioButtons("Jahr", label="Welches Kalenderjahr soll betrachtet werden?", choices=list("2021"=1, "2022"=2), selected=1)
     ),
 
 mainPanel(
   textOutput("TextAlter"),
   plotOutput("VerhaeltnisAlter"),
-  plotOutput("impfungen_woche"),
-  plotOutput("faelle_woche"),
-  plotOutput("tode_woche")
+  plotOutput("impfungen_Woche"),
+  plotOutput("faelle_Woche"),
+  plotOutput("tode_Woche")
   
 
 
@@ -187,29 +258,29 @@ mainPanel(
 
 server <- function(input, output) {
   
-  var_woche<-reactive({
+  var_Woche<-reactive({
     return(input$Woche)
   })
   
   
   ##gibt einen vektor mit 3 Summen zurück:
   ##var_jahr()[1]: die Fälle pro Woche
-  ##var_jahr()[2]: die todesfälle pro woche
-  ##var_jahr()[3]: die impfungen pro wochen
+  ##var_jahr()[2]: die todesfälle pro Woche
+  ##var_jahr()[3]: die impfungen pro Wochen
   var_jahr<-reactive({
     if(input$Jahr==1)({
-      return (c(sum(data21$AnzahlFall[data21$woche==var_woche()]), sum (data21$AnzahlTodesfall[data21$woche==var_woche()]), sum(impf21$Anzahl[impf21$woche==var_woche()])))
+      return (c(sum(data21$AnzahlFall[data21$Woche==var_Woche()]), sum (data21$AnzahlTodesfall[data21$Woche==var_Woche()]), sum(impf21$Anzahl[impf21$Woche==var_Woche()])))
     })
     if(input$Jahr==2)({
-      return (c(sum(data22$AnzahlFall[data22$woche==var_woche()]), sum (data22$AnzahlTodesfall[data22$woche==var_woche()]), sum(impf22$Anzahl[impf22$woche==var_woche()])))
+      return (c(sum(data22$AnzahlFall[data22$Woche==var_Woche()]), sum (data22$AnzahlTodesfall[data22$Woche==var_Woche()]), sum(impf22$Anzahl[impf22$Woche==var_Woche()])))
     })
   })
   
   ##die y-Achsen sind hier unterschiedlich! Ich weiß nicht so recht, wie damit umzugehen - aktuell ist das 
   ##maximum immer der maximal vorkommende wert - so verhalten sich immerhin alle 3 Plots zu ihrem maximum (also quasi zu 100%)
-  output$impfungen_woche<-renderPlot(barplot(main="Anzahl Impfungen in dieser KW",var_jahr()[3],ylim=c(0,max(maxImpfPerWeek21, maxImpfPerWeek22))))
-  output$tode_woche<-renderPlot(barplot(main="Anzahl Todesfälle in dieser KW",var_jahr()[2],ylim=c(0,max(maxDeathsPerWeek21, maxDeathsPerWeek22))))
-  output$faelle_woche<-renderPlot(barplot(main="Anzahl Infektionen in dieser KW",var_jahr()[1],ylim=c(0,max(maxCasesPerWeek21, maxCasesPerWeek22))))
+  output$impfungen_Woche<-renderPlot(barplot(main="Anzahl Impfungen in dieser KW",var_jahr()[3],ylim=c(0,max(maxImpfPerWeek21, maxImpfPerWeek22))))
+  output$tode_Woche<-renderPlot(barplot(main="Anzahl Todesfälle in dieser KW",var_jahr()[2],ylim=c(0,max(maxDeathsPerWeek21, maxDeathsPerWeek22))))
+  output$faelle_Woche<-renderPlot(barplot(main="Anzahl Infektionen in dieser KW",var_jahr()[1],ylim=c(0,max(maxCasesPerWeek21, maxCasesPerWeek22))))
                              
   ##gibt reduzierte Datensätze zurück - im jeweiligen Zeitraum war die Variante mit >50% vertreten
   var_variant<-reactive({
