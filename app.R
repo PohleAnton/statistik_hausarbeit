@@ -10,6 +10,9 @@
 library(shiny)
 library(quantmod)
 library(ggplot2)
+library(tidyverse)
+library(plyr)
+
 
 
 
@@ -119,6 +122,9 @@ data22$Woche<-sub("^0+","",data22$Woche)
 ## 2020
 aggCasesPerDay20 <- aggregate(AnzahlFall ~ Refdatum, FUN = sum, data = data20)
 aggCasesPerWeek20 <- aggregate(AnzahlFall ~ Woche, FUN = sum, data = data20)
+##Problem: ich versuche hiermit die wochen tabelle zu ordnen, klappt auch irgendwie
+## aber im server-code (habe ich auskommentiert), ist der barplot den ich daraus mache immernoch fcking falsch sortiert... hääääääääääää?????
+testSortedCpW20 <- aggCasesPerWeek20[order(as.numeric(as.character(aggCasesPerWeek20$Woche))),]
 
 maxCasesPerDay20 <- max(aggCasesPerDay20$AnzahlFall)
 maxCasesPerWeek20 <- max(aggCasesPerWeek20$AnzahlFall)
@@ -230,6 +236,7 @@ data_ominkron<-data[data$Refdatum > '2021-12-26',]
 
 
 
+
 ## UNTERSUCHUNG: DISKREPANZ ZWISCHEN MELDEDATUM UND REFERENZDATUM (ERKRANKUNGSBEGINN)
 meldeRefDiscrepency <- data$Meldedatum - data$Refdatum
 ## maxDiscrepency
@@ -253,15 +260,35 @@ ui <- fluidPage(
       radioButtons("Variante", label="Welche Virusvariante soll betrachtet werden?", choices = list("Urtyp"=1, "Alpha"=2, "Delta"=3, "Omikron"=4, "Alle zusammen"=5), selected = 5),
       sliderInput(inputId="Woche", label="KalenderWoche", min=1, max=53, value=1),
       radioButtons("Jahr", label="Welches Kalenderjahr soll betrachtet werden?", choices=list("2021"=1, "2022"=2), selected=1)
-    ),
-
+      ),
+    
   mainPanel(
     textOutput("TextAlter"),
     plotOutput("VerhaeltnisAlter"),
     plotOutput("impfungen_Woche"),
     plotOutput("faelle_Woche"),
     plotOutput("tode_Woche")
+  ),
+  
+  
+  
+  sidebarPanel(
+    sliderInput(inputId = "bins",
+                label = "Number of bins:",
+                min = 1,
+                max = 52,
+                value = 52)
+  ),
+  
+  mainPanel(
+    plotOutput("UltimateDings")
   )
+  
+  
+  
+  
+  
+
 )
 
 
@@ -370,6 +397,68 @@ server <- function(input, output) {
   })
   
   output$VerhaeltnisAlter<-renderPlot({plotAlter()})
+  
+  # # returns den dataFrame aus dem später der allumfängliche bar plot erstellt werden soll
+  # advBarPlotDataFrame <- reactive({
+  # 
+  #   return(aggCasesPerDay20) ## abhängig von der Auswahl, muss hier möglicherweise ein anderer data frame eingespeist werden
+  #   
+  # })
+  # 
+  # # returns die height und width die der advBarPlot in der UI haben soll
+  # advBarPlotHeightWidth <- reactive({
+  # 
+  #  
+  #   # für round_any-Funktion, siehe: https://stackoverflow.com/questions/6461209/how-to-round-up-to-the-nearest-10-or-100-or-x
+  #   return(setNames(c(round_any(nrow(advBarPlotDataFrame) * 2, 10), ## erstellt abhängig von der Anzahl an rows eine größere oder kleinere Grafik
+  #           round_any(max(advBarPlotDataFrame) / 4, 10)), c("Height", "Width"))) ## und abhängig vom maximalwert eine bestimmte breite
+  # })
+  
+  output$UltimateDings <- renderPlot({
+    
+    dataFrame <- aggCasesPerDay20
+  
+    # für folgendes code-Verständnis: siehe https://www.youtube.com/watch?v=n_ACYLWUmos
+    dataFrame %>% 
+      ggplot(aes(x = Refdatum, y = AnzahlFall))+
+      geom_bar(stat = "identity", color = "#97B3C6", fill = "#97B3C6")+
+      coord_flip()+ ## flip der x- und y-Achse des bar plots, da dies bei vielen Einträgen auf der x-Achse deutlich übersichtlicher ist
+      theme_bw()+
+      ylim(c(-1, round_any(max(dataFrame[2]), 10, f = ceiling)))+ ## "f = ceiling" - damit nach oben gerundet wird
+      labs(x = "Zeitraum",
+           y = "Faelle", ## abhängig davon, was untersucht wird, muss hier möglicherweise etwas anderes stehen
+           title = "Faelle pro Tag für 2020") ## auch hier könnte anderes untersucht und der Zeitraum ausgetauscht werden
+  }, height = round_any(nrow(aggCasesPerDay20) * 3, 10), width = round_any(max(aggCasesPerDay20[2]) / 3.5, 10)) ## das ist nur gebruteforced
+  
+  # Gibt einen BarPlot zu einem beliebigem DataFrame des Formats [Date, Anzahl] zurück, 
+  # bei dem man beliebige, Histogramm-ähnliche bins bzw. breaks erstellen kann.
+  #
+  # @param advDF - ein formatgerechter DataFrame
+  # @param binSeq - die Breite bzw. Anzahl an Tagen die ein bin (bar) umfassen soll
+  #
+  # @return advBarPlot - der gewünschte BarPlot
+  # 
+  # advBarPlot <- ({ ## "adv" steht für "advanced" (hört sich cooler an - und hebt die input$variablen von den anderen ab, dann sehe ich mehr durch).
+  #   
+  #   advDF <- aggCasesPerDay20 ## Muss im Format: [Date, Numeric Values] kommen. Für anderes könnte man diese Funktion sicherlich abwandeln.
+  #   
+  #   dfLength <- nrow(advDF)
+  #   
+  #   indexVec <- 1:dfLength
+  #   binSequenz <- seq(from = 1, to = dfLength, by = binWidth)
+  #   avgsVec <- c()
+  #   
+  #   for (i in)
+  # })
+  
+  
+  # Funktionierender BarPlot zu CasesPerDay20 ggplot(aggCasesPerDay20, aes(x = Refdatum, y = AnzahlFall)) + geom_bar(stat = "identity", color = "#288BA8", fill = "#288BA8")
+  
+  ## Wochen-Problem, welches oben beschrieben wurde: ggplot(testSortedCpW20 , aes(x = Woche, y = AnzahlFall)) + geom_bar(stat = "identity", color = "#288BA8", fill = "#288BA8")
+  
+  
+  
+  
 }
 
 # Run the application 
