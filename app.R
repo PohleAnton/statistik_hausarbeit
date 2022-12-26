@@ -246,6 +246,50 @@ maxMeldeRefDiscrepency <- max(meldeRefDiscrepency)
 
 
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ----------------------------------------------------------
+#
+#                       Test-Daten
+#
+# ----------------------------------------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Originaldaten als "base"
+base <- data
+
+# base auf die wichtigen Merkmale begrenzen
+base <- base[,c('Refdatum', 'Landkreis', 'Geschlecht', 'AnzahlFall', 'AnzahlTodesfall')]
+
+# ------------------------------------------------------- WOCHEN
+# week-column für base erstellen (c = column)
+cWeeks <- strftime(base$Refdatum, format = "%V")
+
+# Nullen vor den week-chars löschen
+cWeeks <- sub("^0+", "", cWeeks)
+
+# weeks zu numeric values umwandeln
+cWeeks <- as.numeric(cWeeks)
+
+# cWeeks an base ranhängen
+base <- cbind(base, Woche = cWeeks)
+
+# ------------------------------------------------------- MONATE
+# month-column für base erstellen
+cMonths <- strftime(base$Refdatum, format = "%m")
+
+# Nullen vor den month-chars löschen
+cMonths <- sub("^0+", "", cMonths)
+
+# months zu numeric values umwandeln
+cMonths <- as.numeric(cMonths)
+
+# cMonths an base ranhängen
+base <- cbind(base, Monat = cMonths)
+
+
+
+
+
 
 
 ## SHINY LOGIC:
