@@ -13,7 +13,7 @@ library(ggplot2)
 library(tidyverse)
 library(plyr)
 library(dplyr)
-
+library(assertive.base)
 
 
 
@@ -351,17 +351,34 @@ d23weeks <- base[base$Refdatum >= '2023-01-02' & base$Refdatum <= '2023-12-31',]
 # bezieht man die abgeschnittenen Wochen/Monate ein, erhält man dadurch ein weirdes Bild vom jeweiligen Woche/Monat (weil sie/er verkürzt ist)
 # ich kann mir vorstellen, dass wir das nicht zwingend verhindern müssen, weil es dennoch gewisse sachen aussagen kann aber theoretisch
 # könnten wir uns dabei noch was ausdenken
+#
+# da eine variante theoretisch über ein jahr hinweg dominieren kann, könnte sie auch zweimal den monat mit dem value = "Jan" umfassen
+# nämlich einmal in bspw. 2021 und einmal in 2022 (bei wochen dasselbe), da dies bei einer späteren aggregation zu problemen führt
+# müssen wochen und monate einen im bezug aufs jeweilige jahr einzigartigen wert haben, was wie folgt sichergestellt wird
+# Code entnommen aus: https://www.marsja.se/how-to-concatenate-two-columns-or-more-in-r-stringr-tidyr/
+# und aus: https://search.r-project.org/CRAN/refmans/assertive.base/html/parenthesize.html
+# und aus: https://stackoverflow.com/questions/62000584/r-paste-two-strings-without-space
+# und aus: https://www.digitalocean.com/community/tutorials/substring-function-in-r
+
 # urtyp
 dUrtyp <- base[base$Variante == "urtyp",]
+dUrtyp$Woche <- paste(as.character(dUrtyp$Woche), parenthesize(as.character(dUrtyp$Jahr)), sep = "-")
+dUrtyp$Monat <- paste(as.character(dUrtyp$Monat), substring(as.character(dUrtyp$Jahr), 3, 4), sep = "")
 
 # alpha
 dAlpha <- base[base$Variante == "alpha",]
+dAlpha$Woche <- paste(as.character(dAlpha$Woche), parenthesize(as.character(dAlpha$Jahr)), sep = "-")
+dAlpha$Monat <- paste(as.character(dAlpha$Monat), substring(as.character(dAlpha$Jahr), 3, 4), sep = "")
 
 # delta
 dDelta <- base[base$Variante == "delta",]
+dDelta$Woche <- paste(as.character(dDelta$Woche), parenthesize(as.character(dDelta$Jahr)), sep = "-")
+dDelta$Monat <- paste(as.character(dDelta$Monat), substring(as.character(dDelta$Jahr), 3, 4), sep = "")
 
 # omikron
 dOmikron <- base[base$Variante == "omikron",]
+dOmikron$Woche <- paste(as.character(dOmikron$Woche), parenthesize(as.character(dOmikron$Jahr)), sep = "-")
+dOmikron$Monat <- paste(as.character(dOmikron$Monat), substring(as.character(dOmikron$Jahr), 3, 4), sep = "")
 
 
 
