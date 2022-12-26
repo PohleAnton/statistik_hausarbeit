@@ -249,7 +249,7 @@ maxMeldeRefDiscrepency <- max(meldeRefDiscrepency)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ----------------------------------------------------------
 #
-#                       Test-Daten
+#                     - New Approach -
 #
 # ----------------------------------------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -260,7 +260,7 @@ base <- data
 # base auf die wichtigen Merkmale begrenzen
 base <- base[,c('Refdatum', 'Landkreis', 'Geschlecht', 'AnzahlFall', 'AnzahlTodesfall')]
 
-# ------------------------------------------------------- WOCHEN
+# ------------------------------------------------------------------------------------- WOCHENSPALTE
 # week-column für base erstellen (c = column)
 cWeeks <- strftime(base$Refdatum, format = "%V")
 
@@ -273,7 +273,7 @@ cWeeks <- as.numeric(cWeeks)
 # cWeeks an base ranhängen
 base <- cbind(base, Woche = cWeeks)
 
-# ------------------------------------------------------- MONATE
+# ------------------------------------------------------------------------------------- MONATSSPALTE
 # month-column für base erstellen
 cMonths <- strftime(base$Refdatum, format = "%m")
 
@@ -283,11 +283,44 @@ cMonths <- sub("^0+", "", cMonths)
 # months zu numeric values umwandeln
 cMonths <- as.numeric(cMonths)
 
+# Monatszahlen zu Monatsnamen (in abgekürzter Weise als String) konvertieren
+# siehe dafür: https://stackoverflow.com/questions/22058393/convert-a-numeric-month-to-a-month-abbreviation
+cMonths <- month.abb[cMonths]
+
 # cMonths an base ranhängen
 base <- cbind(base, Monat = cMonths)
 
+# ------------------------------------------------------------------------------------- JAHRESSPALTE
+# year-column für base erstellen
+cYears <- strftime(base$Refdatum, format = "%Y")
 
+# Nullen vor den year-chars löschen
+cYears <- sub("^0+", "", cYears)
 
+# years zu numeric values umwandeln
+cYears <- as.numeric(cYears)
+
+# cYears an base ranhängen
+base <- cbind(base, Jahr = cYears)
+
+# ------------------------------------------------------------------------------------- EINTEILUNG IN ZEITRÄUME
+# Unterteilung in einen Datensatz für den gesamten Zeitraum, durch welchen nach Tagen/Monaten aggregiert werden kann (d = data)
+# und einen für die Wochen eines Jahres, denn:
+# die erste/letzte Woche eines Jahres beginnt/endet nicht zwingend im selben Jahr
+# siehe ISO-week-date: https://en.wikipedia.org/wiki/ISO_week_date
+# um ISO-week-dates für jedes Jahr zu bekommen, siehe: https://www.epochconverter.com/weeks/2020
+
+# ------------------------------------------------------------------------------------- 2020
+d20 <- base[base$Refdatum >= '2020-01-01' & base$Refdatum < '2021-01-01',]
+d20weeks <- base[base$Refdatum >= '2019-12-30' & base$Refdatum <= '2021-01-03',]
+
+# ------------------------------------------------------------------------------------- 2021
+d21 <- base[base$Refdatum >= '2021-01-01' & base$Refdatum < '2022-01-01',]
+d21weeks <- base[base$Refdatum >= '2021-01-04' & base$Refdatum <= '2022-01-02',]
+
+# ------------------------------------------------------------------------------------- 2022
+d22 <- base[base$Refdatum >= '2022-01-01' & base$Refdatum < '2023-01-01',]
+d22weeks <- base[base$Refdatum >= '2021-01-04' & base$Refdatum <= '2022-01-02',]
 
 
 
