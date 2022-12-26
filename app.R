@@ -12,6 +12,7 @@ library(quantmod)
 library(ggplot2)
 library(tidyverse)
 library(plyr)
+library(dplyr)
 
 
 
@@ -260,7 +261,8 @@ base <- data
 # base auf die wichtigen Merkmale begrenzen
 base <- base[,c('Refdatum', 'Landkreis', 'Geschlecht', 'AnzahlFall', 'AnzahlTodesfall')]
 
-# ------------------------------------------------------------------------------------- WOCHENSPALTE
+# ------------------------------------------------------------------------------------- WEITERE RELEVANTE MERKMALE ALS SPALTEN HINZUFÜGEN
+# ------------------------------------------------------------------------------------- wochenspalte
 # week-column für base erstellen (c = column)
 cWeeks <- strftime(base$Refdatum, format = "%V")
 
@@ -273,7 +275,7 @@ cWeeks <- as.numeric(cWeeks)
 # cWeeks an base ranhängen
 base <- cbind(base, Woche = cWeeks)
 
-# ------------------------------------------------------------------------------------- MONATSSPALTE
+# ------------------------------------------------------------------------------------- monatsspalte
 # month-column für base erstellen
 cMonths <- strftime(base$Refdatum, format = "%m")
 
@@ -290,7 +292,7 @@ cMonths <- month.abb[cMonths]
 # cMonths an base ranhängen
 base <- cbind(base, Monat = cMonths)
 
-# ------------------------------------------------------------------------------------- JAHRESSPALTE
+# ------------------------------------------------------------------------------------- jahresspalte
 # year-column für base erstellen
 cYears <- strftime(base$Refdatum, format = "%Y")
 
@@ -302,6 +304,24 @@ cYears <- as.numeric(cYears)
 
 # cYears an base ranhängen
 base <- cbind(base, Jahr = cYears)
+
+# ------------------------------------------------------------------------------------- covid-variante-spalte
+# ausgehend von den Zeiträumen, in denen jeweilige Variante vorherrschend war
+## gemäß
+## https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/VOC_VOI_Tabelle.xlsx?__blob=publicationFile
+## wird folgendes angenommen:
+## KW09/2021-KW24/2021: Alpha ist vorherrschend
+## KW25/2021-KW51/2021: Delta ist vorherrschend
+## ab KW52/2021: Omikron- vorerst keine weitere Unterscheidung der Subtypen
+##vorherrschend heißt >50%
+## für folgenden Code, siehe: https://www.marsja.se/r-add-column-to-dataframe-based-on-other-columns-conditions-dplyr/
+base <- base %>%
+  mutate(Variante = case_when(
+    Refdatum <= '2021-03-01' ~ "urtyp",
+    Refdatum > '2021-03-01' & Refdatum <= '2021-06-20' ~ "alpha",
+    Refdatum > '2021-06-20' & data$Refdatum <= '2021-12-26' ~ "delta",
+    Refdatum > '2021-12-26' ~ "omikron"
+  ))
 
 # ------------------------------------------------------------------------------------- EINTEILUNG IN ZEITRÄUME
 # Unterteilung in einen Datensatz für den gesamten Zeitraum, durch welchen nach Tagen/Monaten aggregiert werden kann (d = data)
@@ -320,7 +340,29 @@ d21weeks <- base[base$Refdatum >= '2021-01-04' & base$Refdatum <= '2022-01-02',]
 
 # ------------------------------------------------------------------------------------- 2022
 d22 <- base[base$Refdatum >= '2022-01-01' & base$Refdatum < '2023-01-01',]
-d22weeks <- base[base$Refdatum >= '2021-01-04' & base$Refdatum <= '2022-01-02',]
+d22weeks <- base[base$Refdatum >= '2022-01-03' & base$Refdatum <= '2023-01-01',]
+
+# ------------------------------------------------------------------------------------- 2023
+d23 <- base[base$Refdatum >= '2023-01-01' & base$Refdatum < '2024-01-01',]
+d23weeks <- base[base$Refdatum >= '2023-01-02' & base$Refdatum <= '2023-12-31',]
+
+# ------------------------------------------------------------------------------------- Covid-Varianten
+# Die Daten zu Covid Varianten gehen über Zeiträume, die ggf. in der Mitte einer Woche/eines Monats starten bzw. aufhören
+# bezieht man die abgeschnittenen Wochen/Monate ein, erhält man dadurch ein weirdes Bild vom jeweiligen Woche/Monat (weil sie/er verkürzt ist)
+# ich kann mir vorstellen, dass wir das nicht zwingend verhindern müssen, weil es dennoch gewisse sachen aussagen kann aber theoretisch
+# könnten wir uns dabei noch was ausdenken
+# urtyp
+dUrtyp <- base[base$Variante == "urtyp",]
+
+# alpha
+dAlpha <- base[base$Variante == "alpha",]
+
+# delta
+dDelta <- base[base$Variante == "delta",]
+
+# omikron
+dOmikron <- base[base$Variante == "omikron",]
+
 
 
 
