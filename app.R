@@ -450,38 +450,44 @@ ui <- fluidPage(
   # Application title
   titlePanel("Covid19 - Berlin"),
   
-  sidebarPanel(
-    radioButtons("varUntersuchungsMerkmal", label = "Sollen Fälle oder Todesfälle untersucht werden?",
-                 choices = list("Fälle" = 1, "Todesfälle" = 2), selected = 1),
-    selectInput("varZeitraumArt", label = "Art des Zeitraums:",
-                choices = list("Jahr" = 1, "Covid-Variante" = 2), selected = 1),
-    # conditional panels, siehe: https://shiny.rstudio.com/reference/shiny/1.6.0/conditionalpanel
-    conditionalPanel(
-      condition = "input.varZeitraumArt == 1",
-      radioButtons("varJahr", label = "Welches Jahr soll betrachtet werden?",
-                   choices = list("2020" = 1, "2021" = 2, "2022" = 3, "2023" = 4), selected = 1)
+  sidebarLayout(
+    sidebarPanel(
+      radioButtons("varUntersuchungsMerkmal", label = "Sollen Fälle oder Todesfälle untersucht werden?",
+                   choices = list("Fälle" = 1, "Todesfälle" = 2), selected = 1),
+      selectInput("varZeitraumArt", label = "Art des Zeitraums:",
+                  choices = list("Jahr" = 1, "Covid-Variante" = 2), selected = 1),
+      # conditional panels, siehe: https://shiny.rstudio.com/reference/shiny/1.6.0/conditionalpanel
+      conditionalPanel(
+        condition = "input.varZeitraumArt == 1",
+        radioButtons("varJahr", label = "Welches Jahr soll betrachtet werden?",
+                     choices = list("2020" = 1, "2021" = 2, "2022" = 3, "2023" = 4), selected = 1)
+      ),
+      conditionalPanel(
+        condition = "input.varZeitraumArt == 2",
+        radioButtons("varVariante", label = "Welche Covid-Variante soll betrachtet werden?",
+                     choices = list("Urtyp" = 1, "Alpha" = 2, "Delta"= 3, "Omikron" = 4), selected = 1)
+      ),
+      selectInput("varBetrachtungsArt", label = "Zeitlichen Verlauf oder bestimmtes Merkmal analysieren?",
+                  choices = list("Zeit. Verlauf" = 1, "Merkmal" = 2)),
+      conditionalPanel(
+        condition = "input.varBetrachtungsArt == 1",
+        radioButtons("varZeitEinheit", label = "Einteilung in:",
+                     choices = list("Wochen" = 1, "Monate" = 2, "Jahre" = 3), selected = 1)
+      ),
+      conditionalPanel(
+        condition = "input.varBetrachtungsArt == 2",
+        radioButtons("varMerkmalEinheit", label = "Einteilung in:",
+                     choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 3)
+      ),
+      radioButtons("varUnterteilungsArt", label = "Wonach sollen die Ausprägungen unterteilt sein?",
+                  choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4, selected = 2)
+      )
     ),
-    conditionalPanel(
-      condition = "input.varZeitraumArt == 2",
-      radioButtons("varVariante", label = "Welche Covid-Variante soll betrachtet werden?",
-                   choices = list("Urtyp" = 1, "Alpha" = 2, "Delta"= 3, "Omikron" = 4), selected = 1)
+    mainPanel(
+      plotOutput("barplotFaelleTode")
     ),
-    selectInput("varBetrachtungsArt", label = "Zeitlichen Verlauf oder bestimmtes Merkmal analysieren?",
-                choices = list("Zeit. Verlauf" = 1, "Merkmal" = 2)),
-    conditionalPanel(
-      condition = "input.varBetrachtungsArt == 1",
-      radioButtons("varZeitEinheit", label = "Einteilung in:",
-                   choices = list("Wochen" = 1, "Monate" = 2, "Jahre" = 3), selected = 1)
-    ),
-    conditionalPanel(
-      condition = "input.varBetrachtungsArt == 2",
-      radioButtons("varMerkmalEinheit", label = "Einteilung in:",
-                   choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3), selected = 1)
-    ),
-  ),
-  mainPanel(
-
-    plotOutput("barplotFaelleTode")
+    position = c("left", "right"),
+    fluid = FALSE
   ),
   
   
@@ -671,7 +677,7 @@ server <- function(input, output) {
     # aber nur bei factors funktioniert (also bei uns bei Monaten und Varianten)
     # ich weiß nicht ob es sinn macht alles plötzlich deshalb zu factors umzuwandeln, da der flip nicht so schlimm ist, lasse ich es daher so
     df %>% 
-      ggplot(aes(x = Landkreis, y = AnzahlFall, fill = Geschlecht)) +
+      ggplot(aes(x = Woche, y = AnzahlFall, fill = Altersgruppe)) +
       geom_bar(stat = "identity") +
       coord_flip() +
       theme_minimal() +
@@ -680,7 +686,7 @@ server <- function(input, output) {
            title = "Title") + 
       scale_fill_manual(values = colorRampPalette(brewer.pal(9, "Blues"))(12))
     
-  }, height = 800, width = 600) # siehe: https://stackoverflow.com/questions/17838709/scale-and-size-of-plot-in-rstudio-shiny
+  }, height = 700) # siehe: https://stackoverflow.com/questions/17838709/scale-and-size-of-plot-in-rstudio-shiny
   
   
 }
