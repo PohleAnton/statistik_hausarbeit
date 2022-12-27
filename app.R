@@ -418,6 +418,9 @@ ui <- fluidPage(
   
   mainPanel(
     plotOutput("UltimateDings")
+  ),
+  mainPanel(
+    plotOutput("barplot")
   )
   
   
@@ -533,66 +536,30 @@ server <- function(input, output) {
   })
   
   output$VerhaeltnisAlter<-renderPlot({plotAlter()})
+
   
-  # # returns den dataFrame aus dem später der allumfängliche bar plot erstellt werden soll
-  # advBarPlotDataFrame <- reactive({
-  # 
-  #   return(aggCasesPerDay20) ## abhängig von der Auswahl, muss hier möglicherweise ein anderer data frame eingespeist werden
-  #   
-  # })
-  # 
-  # # returns die height und width die der advBarPlot in der UI haben soll
-  # advBarPlotHeightWidth <- reactive({
-  # 
-  #  
-  #   # für round_any-Funktion, siehe: https://stackoverflow.com/questions/6461209/how-to-round-up-to-the-nearest-10-or-100-or-x
-  #   return(setNames(c(round_any(nrow(advBarPlotDataFrame) * 2, 10), ## erstellt abhängig von der Anzahl an rows eine größere oder kleinere Grafik
-  #           round_any(max(advBarPlotDataFrame) / 4, 10)), c("Height", "Width"))) ## und abhängig vom maximalwert eine bestimmte breite
-  # })
   
-  output$UltimateDings <- renderPlot({
+  
+  
+  
+  output$barplot <- renderPlot({
     
-    dataFrame <- aggCasesPerDay20
-  
+    df <- d20weeks
+    
     # für folgendes code-Verständnis: siehe https://www.youtube.com/watch?v=n_ACYLWUmos
-    dataFrame %>% 
-      ggplot(aes(x = Refdatum, y = AnzahlFall))+
-      geom_bar(stat = "identity", color = "#97B3C6", fill = "#97B3C6")+
-      coord_flip()+ ## flip der x- und y-Achse des bar plots, da dies bei vielen Einträgen auf der x-Achse deutlich übersichtlicher ist
-      theme_bw()+
-      ylim(c(-1, round_any(max(dataFrame[2]), 10, f = ceiling)))+ ## "f = ceiling" - damit nach oben gerundet wird
+    # und unter: http://www.sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization
+    df <- df %>% 
+      ggplot(aes(x = Woche, y = AnzahlFall, fill = Geschlecht))+
+      geom_bar(stat = "identity")+
+      coord_flip()+ # flip der x- und y-Achse des bar plots, da dies bei vielen Einträgen auf der x-Achse deutlich übersichtlicher ist
+      theme_minimal()+
       labs(x = "Zeitraum",
-           y = "Faelle", ## abhängig davon, was untersucht wird, muss hier möglicherweise etwas anderes stehen
-           title = "Faelle pro Tag für 2020") ## auch hier könnte anderes untersucht und der Zeitraum ausgetauscht werden
-  }, height = round_any(nrow(aggCasesPerDay20) * 3, 10), width = round_any(max(aggCasesPerDay20[2]) / 3.5, 10)) ## das ist nur gebruteforced
-  
-  # Gibt einen BarPlot zu einem beliebigem DataFrame des Formats [Date, Anzahl] zurück, 
-  # bei dem man beliebige, Histogramm-ähnliche bins bzw. breaks erstellen kann.
-  #
-  # @param advDF - ein formatgerechter DataFrame
-  # @param binSeq - die Breite bzw. Anzahl an Tagen die ein bin (bar) umfassen soll
-  #
-  # @return advBarPlot - der gewünschte BarPlot
-  # 
-  # advBarPlot <- ({ ## "adv" steht für "advanced" (hört sich cooler an - und hebt die input$variablen von den anderen ab, dann sehe ich mehr durch).
-  #   
-  #   advDF <- aggCasesPerDay20 ## Muss im Format: [Date, Numeric Values] kommen. Für anderes könnte man diese Funktion sicherlich abwandeln.
-  #   
-  #   dfLength <- nrow(advDF)
-  #   
-  #   indexVec <- 1:dfLength
-  #   binSequenz <- seq(from = 1, to = dfLength, by = binWidth)
-  #   avgsVec <- c()
-  #   
-  #   for (i in)
-  # })
-  
-  
-  # Funktionierender BarPlot zu CasesPerDay20 ggplot(aggCasesPerDay20, aes(x = Refdatum, y = AnzahlFall)) + geom_bar(stat = "identity", color = "#288BA8", fill = "#288BA8")
-  
-  ## Wochen-Problem, welches oben beschrieben wurde: ggplot(testSortedCpW20 , aes(x = Woche, y = AnzahlFall)) + geom_bar(stat = "identity", color = "#288BA8", fill = "#288BA8")
-  
-  
+           y = "Faelle", 
+           title = "Faelle pro Tag für 2020")
+    
+    df + scale_fill_manual(values = c('#61CFEC', '#BCEC61', '#EC7861'))
+    
+  })
   
   
 }
