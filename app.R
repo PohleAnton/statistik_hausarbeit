@@ -477,11 +477,10 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.varBetrachtungsArt == 2",
         radioButtons("varMerkmalEinheit", label = "Einteilung in:",
-                     choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 3)
+                     choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1)
       ),
       radioButtons("varUnterteilungsArt", label = "Wonach sollen die Ausprägungen unterteilt sein?",
-                  choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4, selected = 2)
-      )
+                  choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1)
     ),
     mainPanel(
       # für tabsetPanel und tabPanel, siehe: https://shiny.rstudio.com/reference/shiny/0.14/tabsetpanel
@@ -647,27 +646,34 @@ server <- function(input, output) {
   # ----------------------------------------------------------
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
-  # # Erstellt und returns eine Farbpalette, die für die farbliche bar-Unterteilung im barplotFaelleTode genutzt wird
-  # getColorPalette <- reacitve({
-  #   
-  #   # da im späteren barplotFaelleTode die bars farblich unterteilt werden, braucht es bei vielen unterteilungen color-paletts
-  #   # dafür nutze ich die brewer-paletten, siehe: https://rdrr.io/cran/RColorBrewer/man/ColorBrewer.html
-  #   #
-  #   # speziell nutze ich die "Blues"-Palette für Fälle und die "Reds"-Palette für Tode
-  #   # beide sind allerdings nur 9 Farben lang, beim Merkmal "Landkreis" gibt es allerdings 12 Ausprägungen
-  #   # in diesem Fall verlängere ich die Paletten mit der Funktion "colorRampPalette", siehe:
-  #   # https://www.datanovia.com/en/blog/easy-way-to-expand-color-palettes-in-r/
-  #   
-  #   palCols <- 12
-  #   landkreisPalette <- colorRampPalette(brewer.pal(9, "Blues"))(palCols)
-  #   
-  # })
-  # 
-  # getColNumber <- ({
-  #   palCols <- 12
-  #   return(landkreisPalette <- colorRampPalette(brewer.pal(9, "Blues"))(palCols))})
-  
-  
+  # Erstellt und returns eine Farbpalette, die für die farbliche bar-Unterteilung im barplotFaelleTode genutzt wird
+  getColorPalette <- reactive({
+
+    # da im späteren barplotFaelleTode die bars farblich unterteilt werden, braucht es bei vielen unterteilungen color-paletts
+    # dafür nutze ich die brewer-paletten, siehe: https://rdrr.io/cran/RColorBrewer/man/ColorBrewer.html
+    #
+    # speziell nutze ich die "Blues"-Palette für Fälle und die "Reds"-Palette für Tode
+    # beide sind allerdings nur 9 Farben lang, beim Merkmal "Landkreis" gibt es allerdings 12 Ausprägungen
+    # in diesem Fall verlängere ich die Paletten mit der Funktion "colorRampPalette", siehe:
+    # https://www.datanovia.com/en/blog/easy-way-to-expand-color-palettes-in-r/
+
+    # aus: https://htmlcolorcodes.com/
+    if(input$varUnterteilungsArt == 2){return(c("#4CE6EA", "#AAEC4F", "#EC754F"))}
+    
+    # für switch-case, siehe: https://www.geeksforgeeks.org/switch-case-in-r/
+    colorType <- switch(as.character(input$varUntersuchungsMerkmal),
+                    "1" = "Blues",
+                    "2" = "Reds")
+
+    numOfSubdivs <- switch(as.character(input$varUnterteilungsArt),
+                           "1" = 12,
+                           "2" = 3,
+                           "3"= 7,
+                           "4" = 4)
+
+    return(colorRampPalette(brewer.pal(9, colorType))(as.numeric(numOfSubdivs)))
+
+  })
   
   output$barplotFaelleTode <- renderPlot({
     
@@ -689,7 +695,7 @@ server <- function(input, output) {
       labs(x = "x",
            y = "y", 
            title = "Title") + 
-      scale_fill_brewer(palette = "Blues")
+      scale_fill_manual(values = getColorPalette())
     
   }, height = 650) # siehe: https://stackoverflow.com/questions/17838709/scale-and-size-of-plot-in-rstudio-shiny
   
