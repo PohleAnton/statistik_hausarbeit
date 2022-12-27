@@ -362,23 +362,61 @@ d23weeks <- base[base$Refdatum >= '2023-01-02' & base$Refdatum <= '2023-12-31',]
 
 # urtyp
 dUrtyp <- base[base$Variante == "urtyp",]
-dUrtyp$Woche <- paste(as.character(dUrtyp$Woche), parenthesize(as.character(dUrtyp$Jahr)), sep = "-")
+dUrtyp$Woche <- paste(as.character(dUrtyp$Woche), parenthesize(substring(as.character(dUrtyp$Jahr), 4)), sep = "-")
 dUrtyp$Monat <- paste(as.character(dUrtyp$Monat), substring(as.character(dUrtyp$Jahr), 3, 4), sep = "")
 
 # alpha
 dAlpha <- base[base$Variante == "alpha",]
-dAlpha$Woche <- paste(as.character(dAlpha$Woche), parenthesize(as.character(dAlpha$Jahr)), sep = "-")
+dAlpha$Woche <- paste(as.character(dAlpha$Woche), parenthesize(substring(as.character(dAlpha$Jahr), 4)), sep = "-")
 dAlpha$Monat <- paste(as.character(dAlpha$Monat), substring(as.character(dAlpha$Jahr), 3, 4), sep = "")
 
 # delta
 dDelta <- base[base$Variante == "delta",]
-dDelta$Woche <- paste(as.character(dDelta$Woche), parenthesize(as.character(dDelta$Jahr)), sep = "-")
+dDelta$Woche <- paste(as.character(dDelta$Woche), parenthesize(substring(as.character(dDelta$Jahr), 4)), sep = "-")
 dDelta$Monat <- paste(as.character(dDelta$Monat), substring(as.character(dDelta$Jahr), 3, 4), sep = "")
 
 # omikron
 dOmikron <- base[base$Variante == "omikron",]
-dOmikron$Woche <- paste(as.character(dOmikron$Woche), parenthesize(as.character(dOmikron$Jahr)), sep = "-")
+dOmikron$Woche <- paste(as.character(dOmikron$Woche), parenthesize(substring(as.character(dOmikron$Jahr), 4)), sep = "-")
 dOmikron$Monat <- paste(as.character(dOmikron$Monat), substring(as.character(dOmikron$Jahr), 3, 4), sep = "")
+
+# ------------------------------------------------------------------------------------- UMWANDELN VON CHARACTERSPALTEN ZU FACTORS
+# belassen wir die spalten so wie sie jetzt sind, ordnet ggplot sie später alphabetisch
+# aus diesem grund müssen wir die characterspalten nun zu factors machen, damit sie ihre ordnung behalten
+# zu diesem problem, siehe: https://stackoverflow.com/questions/20041136/avoid-ggplot-sorting-the-x-axis-while-plotting-geom-bar
+# diesen ansatz verwende ich hier, allerdings hat das levels setzen so nicht funktioniert
+# daher die lösung dafür, unter: https://www.r-bloggers.com/2021/12/how-to-find-unique-values-in-r/
+# more about factors: https://r4ds.had.co.nz/factors.html#:~:text=In%20R%2C%20factors%20are%20used,to%20work%20with%20than%20characters.
+#
+# ich setze jetzt hier die factors für alle bisherigen dataframes ein, man hätte das sicherlich auch schon früher machen können
+# aber da ich schon halb wahnsinnig bin und sonst noch was kaputt mache, hole ich das jetzt alles übersichtlich hier nach
+# (kann man nicht einfach schon bei base machen weil später noch character spalten für einzigartigkeit zusammengefügt werden)
+
+base$Monat <- factor(base$Monat, levels = unique(base$Monat))
+base$Variante <- factor(base$Variante, levels = unique(base$Variante))
+
+d20$Monat <- factor(d20$Monat, levels = unique(d20$Monat))
+d20$Variante <- factor(d20$Variante, levels = unique(d20$Variante))
+
+d21$Monat <- factor(d21$Monat, levels = unique(d21$Monat))
+d21$Variante <- factor(d21$Variante, levels = unique(d21$Variante))
+
+d22$Monat <- factor(d22$Monat, levels = unique(d22$Monat))
+d22$Variante <- factor(d22$Variante, levels = unique(d22$Variante))
+
+dUrtyp$Monat <- factor(dUrtyp$Monat, levels = unique(dUrtyp$Monat))
+dUrtyp$Variante <- factor(dUrtyp$Variante, levels = unique(dUrtyp$Variante))
+
+dAlpha$Monat <- factor(dAlpha$Monat, levels = unique(dAlpha$Monat))
+dAlpha$Variante <- factor(dAlpha$Variante, levels = unique(dAlpha$Variante))
+
+dDelta$Monat <- factor(dDelta$Monat, levels = unique(dDelta$Monat))
+dDelta$Variante <- factor(dDelta$Variante, levels = unique(dDelta$Variante))
+
+dOmikron$Monat <- factor(dOmikron$Monat, levels = unique(dOmikron$Monat))
+dOmikron$Variante <- factor(dOmikron$Variante, levels = unique(dOmikron$Variante))
+
+
 
 
 
@@ -544,20 +582,21 @@ server <- function(input, output) {
   
   output$barplot <- renderPlot({
     
-    df <- d20weeks
+    df <- d20
     
     # für folgendes code-Verständnis: siehe https://www.youtube.com/watch?v=n_ACYLWUmos
     # und unter: http://www.sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization
     df <- df %>% 
-      ggplot(aes(x = Woche, y = AnzahlFall, fill = Geschlecht))+
-      geom_bar(stat = "identity")+
-      coord_flip()+ # flip der x- und y-Achse des bar plots, da dies bei vielen Einträgen auf der x-Achse deutlich übersichtlicher ist
-      theme_minimal()+
+      ggplot(aes(x = Monat, y = AnzahlFall, fill = Geschlecht)) +
+      geom_bar(stat = "identity") +
+      coord_flip() + # flip der x- und y-Achse des bar plots, da dies bei vielen Einträgen auf der x-Achse deutlich übersichtlicher ist
+      theme_minimal() +
       labs(x = "Zeitraum",
            y = "Faelle", 
-           title = "Faelle pro Tag für 2020")
+           title = "Faelle pro Tag für 2020") + 
+      scale_fill_manual(values = c('#61CFEC', '#BCEC61', '#EC7861'))
     
-    df + scale_fill_manual(values = c('#61CFEC', '#BCEC61', '#EC7861'))
+    df
     
   })
   
