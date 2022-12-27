@@ -14,6 +14,7 @@ library(tidyverse)
 library(plyr)
 library(dplyr)
 library(assertive.base)
+library(RColorBrewer)
 
 
 
@@ -250,7 +251,7 @@ maxMeldeRefDiscrepency <- max(meldeRefDiscrepency)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ----------------------------------------------------------
 #
-#                     - New Approach -
+#                   - New Data Approach -
 #
 # ----------------------------------------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -259,7 +260,17 @@ maxMeldeRefDiscrepency <- max(meldeRefDiscrepency)
 base <- data
 
 # base auf die wichtigen Merkmale begrenzen
-base <- base[,c('Refdatum', 'Landkreis', 'Geschlecht', 'AnzahlFall', 'AnzahlTodesfall')]
+base <- base[,c('Refdatum', 'Landkreis', 'Geschlecht', 'Altersgruppe', 'AnzahlFall', 'AnzahlTodesfall')]
+
+# char-columns zu factors umwandeln. wie und warum? -> siehe: UMWANDELN VON CHARACTERSPALTEN ZU FACTORS
+base$Geschlecht <- factor(base$Geschlecht, levels = c("M", "unbekannt", "W")) 
+# ich habe landkreis custom geordnet, da auf die Weise, die nach dem Landkreis aggregierten Fall-Daten (und andere)
+# so nun automatisch und ohne Weiteres in der richtigen, Reihenfolge abgebildet werden (beim späteren barplotFaelleTode)
+base$Landkreis <- factor(base$Landkreis, levels = rev(c("SK Berlin Mitte", "SK Berlin Neukölln", "SK Berlin Tempelhof-Schöneberg", 
+                                                    "SK Berlin Friedrichshain-Kreuzberg", "SK Berlin Charlottenburg-Wilmersdorf", 
+                                                    "SK Berlin Pankow", "SK Berlin Reinickendorf", "SK Berlin Spandau", 
+                                                    "SK Berlin Steglitz-Zehlendorf", "SK Berlin Lichtenberg", 
+                                                    "SK Berlin Treptow-Köpenick", "SK Berlin Marzahn-Hellersdorf")))
 
 # ------------------------------------------------------------------------------------- WEITERE RELEVANTE MERKMALE ALS SPALTEN HINZUFÜGEN
 # ------------------------------------------------------------------------------------- wochenspalte
@@ -422,12 +433,63 @@ dOmikron$Variante <- factor(dOmikron$Variante, levels = unique(dOmikron$Variante
 
 
 
+
+
 ## SHINY LOGIC:
 # Define UI for application that draws a histogram
 ui <- fluidPage(
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # ----------------------------------------------------------
+  #
+  #                  - New UI Approach -
+  #
+  # ----------------------------------------------------------
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  # Application title
+  titlePanel("Covid19 - Berlin"),
+  
+  sidebarPanel(
+    radioButtons("varUntersuchungsMerkmal", label = "Sollen Fälle oder Todesfälle untersucht werden?",
+                 choices = list("Fälle" = 1, "Todesfälle" = 2), selected = 1),
+    selectInput("varZeitraumArt", label = "Art des Zeitraums:",
+                choices = list("Jahr" = 1, "Covid-Variante" = 2), selected = 1),
+    # conditional panels, siehe: https://shiny.rstudio.com/reference/shiny/1.6.0/conditionalpanel
+    conditionalPanel(
+      condition = "input.varZeitraumArt == 1",
+      radioButtons("varJahr", label = "Welches Jahr soll betrachtet werden?",
+                   choices = list("2020" = 1, "2021" = 2, "2022" = 3, "2023" = 4), selected = 1)
+    ),
+    conditionalPanel(
+      condition = "input.varZeitraumArt == 2",
+      radioButtons("varVariante", label = "Welche Covid-Variante soll betrachtet werden?",
+                   choices = list("Urtyp" = 1, "Alpha" = 2, "Delta"= 3, "Omikron" = 4), selected = 1)
+    ),
+    selectInput("varBetrachtungsArt", label = "Zeitlichen Verlauf oder bestimmtes Merkmal analysieren?",
+                choices = list("Zeit. Verlauf" = 1, "Merkmal" = 2)),
+    conditionalPanel(
+      condition = "input.varBetrachtungsArt == 1",
+      radioButtons("varZeitEinheit", label = "Einteilung in:",
+                   choices = list("Wochen" = 1, "Monate" = 2, "Jahre" = 3), selected = 1)
+    ),
+    conditionalPanel(
+      condition = "input.varBetrachtungsArt == 2",
+      radioButtons("varMerkmalEinheit", label = "Einteilung in:",
+                   choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3), selected = 1)
+    ),
+  ),
+  mainPanel(
 
-    # Application title
-    titlePanel("Covid19 in Berlin"),
+    plotOutput("barplotFaelleTode")
+  ),
+  
+  
+  
+
+  # ----------------------------------------------------------
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # ----------------------------------------------------------
   
     sidebarPanel(
       selectInput("Altersgruppe", label="Wählen Sie eine Altersgruppe", choices = list("unbekannt"=1, "0 bis 4 Jahre"=2,"5 bis 14 Jahre"=3, "15 bis 34 Jahre"=4,"35 bis 59 Jahre"=5,"60 bis 79 Jahre"=6,"über 80 Jahre"=7, "Gesamt"=8), selected = 8),
@@ -442,24 +504,11 @@ ui <- fluidPage(
     plotOutput("impfungen_Woche"),
     plotOutput("faelle_Woche"),
     plotOutput("tode_Woche")
-  ),
-  
-  
-  
-  sidebarPanel(
-    sliderInput(inputId = "bins",
-                label = "Number of bins:",
-                min = 1,
-                max = 52,
-                value = 52)
-  ),
-  
-  mainPanel(
-    plotOutput("UltimateDings")
-  ),
-  mainPanel(
-    plotOutput("barplot")
   )
+  
+  
+  
+  
   
   
   
@@ -579,26 +628,59 @@ server <- function(input, output) {
   
   
   
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # ----------------------------------------------------------
+  #
+  #                 - New Server Approach -
+  #
+  # ----------------------------------------------------------
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
-  output$barplot <- renderPlot({
+  # # Erstellt und returns eine Farbpalette, die für die farbliche bar-Unterteilung im barplotFaelleTode genutzt wird
+  # getColorPalette <- reacitve({
+  #   
+  #   # da im späteren barplotFaelleTode die bars farblich unterteilt werden, braucht es bei vielen unterteilungen color-paletts
+  #   # dafür nutze ich die brewer-paletten, siehe: https://rdrr.io/cran/RColorBrewer/man/ColorBrewer.html
+  #   #
+  #   # speziell nutze ich die "Blues"-Palette für Fälle und die "Reds"-Palette für Tode
+  #   # beide sind allerdings nur 9 Farben lang, beim Merkmal "Landkreis" gibt es allerdings 12 Ausprägungen
+  #   # in diesem Fall verlängere ich die Paletten mit der Funktion "colorRampPalette", siehe:
+  #   # https://www.datanovia.com/en/blog/easy-way-to-expand-color-palettes-in-r/
+  #   
+  #   palCols <- 12
+  #   landkreisPalette <- colorRampPalette(brewer.pal(9, "Blues"))(palCols)
+  #   
+  # })
+  # 
+  # getColNumber <- ({
+  #   palCols <- 12
+  #   return(landkreisPalette <- colorRampPalette(brewer.pal(9, "Blues"))(palCols))})
+  
+  
+  
+  output$barplotFaelleTode <- renderPlot({
     
     df <- d20
     
     # für folgendes code-Verständnis: siehe https://www.youtube.com/watch?v=n_ACYLWUmos
     # und unter: http://www.sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization
-    df <- df %>% 
-      ggplot(aes(x = Monat, y = AnzahlFall, fill = Geschlecht)) +
+    #
+    # ich nutze einen "coord_flip", da ein flip der x- und y-Achse des bar plots, bei vielen Einträgen auf der x-Achse deutlich übersichtlicher ist
+    # leider reversed der coord flip die x-achse, was zwar fixable mit "forcats::fct_rev(spalte)" ist, siehe: 
+    # https://stackoverflow.com/questions/34227967/reversed-order-after-coord-flip-in-r
+    # aber nur bei factors funktioniert (also bei uns bei Monaten und Varianten)
+    # ich weiß nicht ob es sinn macht alles plötzlich deshalb zu factors umzuwandeln, da der flip nicht so schlimm ist, lasse ich es daher so
+    df %>% 
+      ggplot(aes(x = Landkreis, y = AnzahlFall, fill = Geschlecht)) +
       geom_bar(stat = "identity") +
-      coord_flip() + # flip der x- und y-Achse des bar plots, da dies bei vielen Einträgen auf der x-Achse deutlich übersichtlicher ist
+      coord_flip() +
       theme_minimal() +
-      labs(x = "Zeitraum",
-           y = "Faelle", 
-           title = "Faelle pro Tag für 2020") + 
-      scale_fill_manual(values = c('#61CFEC', '#BCEC61', '#EC7861'))
+      labs(x = "x",
+           y = "y", 
+           title = "Title") + 
+      scale_fill_manual(values = colorRampPalette(brewer.pal(9, "Blues"))(12))
     
-    df
-    
-  })
+  }, height = 800, width = 600) # siehe: https://stackoverflow.com/questions/17838709/scale-and-size-of-plot-in-rstudio-shiny
   
   
 }
