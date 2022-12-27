@@ -484,7 +484,12 @@ ui <- fluidPage(
       )
     ),
     mainPanel(
-      plotOutput("barplotFaelleTode")
+      # für tabsetPanel und tabPanel, siehe: https://shiny.rstudio.com/reference/shiny/0.14/tabsetpanel
+      tabsetPanel(
+        tabPanel("Diagramm", plotOutput("barplotFaelleTode")),
+        tabPanel("Zusammenfassung", verbatimTextOutput("zusammenfassung")),
+        tabPanel("Beschreibung", textOutput("beschreibung"))
+      )
     ),
     position = c("left", "right"),
     fluid = FALSE
@@ -684,9 +689,9 @@ server <- function(input, output) {
       labs(x = "x",
            y = "y", 
            title = "Title") + 
-      scale_fill_manual(values = colorRampPalette(brewer.pal(9, "Blues"))(12))
+      scale_fill_brewer(palette = "Blues")
     
-  }, height = 700) # siehe: https://stackoverflow.com/questions/17838709/scale-and-size-of-plot-in-rstudio-shiny
+  }, height = 650) # siehe: https://stackoverflow.com/questions/17838709/scale-and-size-of-plot-in-rstudio-shiny
   
   
 }
