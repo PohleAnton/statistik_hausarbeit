@@ -783,7 +783,9 @@ server <- function(input, output) {
       if(input$varPercPlotBool == TRUE) { #falls die anteile abgebildet werden sollen
         return(getDataFrame() %>% 
                  ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
+                 # für geom_col, siehe: https://r-graphics.org/recipe-bar-graph-proportional-stacked-bar
                  geom_col(position = "fill") + #diese line macht bei verzweigung 2 den unterschied (sie ersetzt "geom_bar")
+                 scale_y_continuous(labels = scales::percent) +
                  coord_flip() + #diese line macht bei verzweigung-1 den unterschied
                  theme_minimal() +
                  labs(x = "x",
@@ -825,6 +827,14 @@ server <- function(input, output) {
                  scale_fill_manual(values = getColorPalette()))
       }
     }
+    
+    # es gibt leider bei den stacked percentage barplots manchmal probleme (die bars extenden zu -100%)
+    # nach: https://stackoverflow.com/questions/13734368/ggplot2-and-a-stacked-bar-chart-with-negative-values
+    # glaube ich, dass es an negativen values innerhalb der y-spalte liegt
+    # gibt man "base[base$AnzahlFall < 0,]" (bei untersuchung von anzahl fall relevant) in die konsole ein, sieh man,
+    # dass es viele von eben solchen negativen Werten gibt, die das problem verursachen könnten
+    # ich habe bisher noch keine lösung gefunden, allerdings ist das problem aus meiner sicht nicht gravieren,
+    # man kann im percentage bar plot trotzdem die wichtigen sachen ablesen
     
   })
   
