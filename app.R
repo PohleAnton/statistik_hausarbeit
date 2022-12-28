@@ -373,23 +373,29 @@ d23weeks <- base[base$Refdatum >= '2023-01-02' & base$Refdatum <= '2023-12-31',]
 
 # urtyp
 dUrtyp <- base[base$Variante == "urtyp",]
-dUrtyp$Woche <- paste(as.character(dUrtyp$Woche), parenthesize(substring(as.character(dUrtyp$Jahr), 4)), sep = "-")
+dUrtyp$Woche <- paste(as.character(dUrtyp$Woche), parenthesize(as.character(dUrtyp$Jahr)), sep = "-")
 dUrtyp$Monat <- paste(as.character(dUrtyp$Monat), substring(as.character(dUrtyp$Jahr), 3, 4), sep = "")
+# kleine adjustments wegen der weirden wochendynamik (53. Woche von 20 liegt zum Teil in 21, 
+# dieser bekommt deshalb 53-(2021) und die daten werden an den stellen richtig weird)
+# für den code, siehe: https://sparkbyexamples.com/r-programming/replace-values-in-r/#:~:text=To%20replace%20a%20column%20value,single%20column%20use%20df%24column_name%20.
+dUrtyp$Woche[dUrtyp$Refdatum >= '2020-12-28' & dUrtyp$Refdatum <= '2021-01-03'] <- "53-(2020)"
 
 # alpha
 dAlpha <- base[base$Variante == "alpha",]
-dAlpha$Woche <- paste(as.character(dAlpha$Woche), parenthesize(substring(as.character(dAlpha$Jahr), 4)), sep = "-")
+dAlpha$Woche <- paste(as.character(dAlpha$Woche), parenthesize(as.character(dAlpha$Jahr)), sep = "-")
 dAlpha$Monat <- paste(as.character(dAlpha$Monat), substring(as.character(dAlpha$Jahr), 3, 4), sep = "")
 
 # delta
 dDelta <- base[base$Variante == "delta",]
-dDelta$Woche <- paste(as.character(dDelta$Woche), parenthesize(substring(as.character(dDelta$Jahr), 4)), sep = "-")
+dDelta$Woche <- paste(as.character(dDelta$Woche), parenthesize(as.character(dDelta$Jahr)), sep = "-")
 dDelta$Monat <- paste(as.character(dDelta$Monat), substring(as.character(dDelta$Jahr), 3, 4), sep = "")
 
 # omikron
 dOmikron <- base[base$Variante == "omikron",]
-dOmikron$Woche <- paste(as.character(dOmikron$Woche), parenthesize(substring(as.character(dOmikron$Jahr), 4)), sep = "-")
+dOmikron$Woche <- paste(as.character(dOmikron$Woche), parenthesize(as.character(dOmikron$Jahr)), sep = "-")
 dOmikron$Monat <- paste(as.character(dOmikron$Monat), substring(as.character(dOmikron$Jahr), 3, 4), sep = "")
+# wochen-weirdness hops nehmen
+dOmikron$Woche[dOmikron$Refdatum >= '2021-12-27' & dOmikron$Refdatum <= '2022-01-02'] <- "52-(2021)"
 
 # ------------------------------------------------------------------------------------- UMWANDELN VON CHARACTERSPALTEN ZU FACTORS
 # belassen wir die spalten so wie sie jetzt sind, ordnet ggplot sie später alphabetisch
@@ -415,15 +421,22 @@ d21$Variante <- factor(d21$Variante, levels = unique(d21$Variante))
 d22$Monat <- factor(d22$Monat, levels = unique(d22$Monat))
 d22$Variante <- factor(d22$Variante, levels = unique(d22$Variante))
 
+d23$Monat <- factor(d23$Monat, levels = unique(d23$Monat))
+d23$Variante <- factor(d23$Variante, levels = unique(d23$Variante))
+
+dUrtyp$Woche <- factor(dUrtyp$Woche, levels = unique(dUrtyp$Woche))
 dUrtyp$Monat <- factor(dUrtyp$Monat, levels = unique(dUrtyp$Monat))
 dUrtyp$Variante <- factor(dUrtyp$Variante, levels = unique(dUrtyp$Variante))
 
+dAlpha$Woche <- factor(dAlpha$Woche, levels = unique(dAlpha$Woche))
 dAlpha$Monat <- factor(dAlpha$Monat, levels = unique(dAlpha$Monat))
 dAlpha$Variante <- factor(dAlpha$Variante, levels = unique(dAlpha$Variante))
 
+dDelta$Woche <- factor(dDelta$Woche, levels = unique(dDelta$Woche))
 dDelta$Monat <- factor(dDelta$Monat, levels = unique(dDelta$Monat))
 dDelta$Variante <- factor(dDelta$Variante, levels = unique(dDelta$Variante))
 
+dOmikron$Woche <- factor(dOmikron$Woche, levels = unique(dOmikron$Woche))
 dOmikron$Monat <- factor(dOmikron$Monat, levels = unique(dOmikron$Monat))
 dOmikron$Variante <- factor(dOmikron$Variante, levels = unique(dOmikron$Variante))
 
@@ -515,16 +528,6 @@ ui <- fluidPage(
     plotOutput("faelle_Woche"),
     plotOutput("tode_Woche")
   )
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
 )
 
 
@@ -646,6 +649,7 @@ server <- function(input, output) {
   # ----------------------------------------------------------
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
+  # ------------------------------------------------------------------------------------- GET-COLOR-PALETTE
   # Erstellt und returns eine Farbpalette, die für die farbliche bar-Unterteilung im barplotFaelleTode genutzt wird
   getColorPalette <- reactive({
 
@@ -661,6 +665,7 @@ server <- function(input, output) {
     if(input$varUnterteilungsArt == 2){return(c("#4CE6EA", "#AAEC4F", "#EC754F"))}
     
     # für switch-case, siehe: https://www.geeksforgeeks.org/switch-case-in-r/
+    # warum mache ich alles immer erst zum character? --> weil es bei mir anders warum auch immer nicht funktioniert
     colorType <- switch(as.character(input$varUntersuchungsMerkmal),
                     "1" = "Blues",
                     "2" = "Reds")
@@ -675,10 +680,43 @@ server <- function(input, output) {
 
   })
   
-  output$barplotFaelleTode <- renderPlot({
+  # ------------------------------------------------------------------------------------- GET-DATA-FRAME
+  getDataFrame <- reactive({
     
+    if(input$varZeitraumArt == 1) { #falls jahre untersucht werden
+      if(input$varBetrachtungsArt == 1 & input$varZeitEinheit == 1) { #falls x-achse nach wochen (dann ist der Zeitraum nicht genau das Jahr)
+        switch(as.character(input$varJahr),
+               "1" = return(d20weeks),
+               "2" = return(d21weeks),
+               "3" = return(d22weeks),
+               "4" = return(d23weeks))
+      }
+      else { #wenn x-achse nicht nach wochen aufgeteilt ist
+        switch(as.character(input$varJahr),
+               "1" = return(d20),
+               "2" = return(d21),
+               "3" = return(d22),
+               "4" = return(d23))
+      }
+    }
+    else { #wenn covid-varianten untersucht werden
+      switch(as.character(input$varVariante),
+             "1" = return(dUrtyp),
+             "2" = return(dAlpha),
+             "3" = return(dDelta),
+             "4" = return(dOmikron))
+    }
+  })
+  
+  # ------------------------------------------------------------------------------------- GET-X-AXIS-ATTRIBUTE
+  
+  
+  # ------------------------------------------------------------------------------------- BUILD PLOT
+  barplotFaelleTode <- reactive({
+    
+    # bekommt den zu untersuchenden dataframe
     df <- d20
-    
+  
     # für folgendes code-Verständnis: siehe https://www.youtube.com/watch?v=n_ACYLWUmos
     # und unter: http://www.sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization
     #
@@ -687,7 +725,7 @@ server <- function(input, output) {
     # https://stackoverflow.com/questions/34227967/reversed-order-after-coord-flip-in-r
     # aber nur bei factors funktioniert (also bei uns bei Monaten und Varianten)
     # ich weiß nicht ob es sinn macht alles plötzlich deshalb zu factors umzuwandeln, da der flip nicht so schlimm ist, lasse ich es daher so
-    df %>% 
+    return(getDataFrame() %>% 
       ggplot(aes(x = Woche, y = AnzahlFall, fill = Altersgruppe)) +
       geom_bar(stat = "identity") +
       coord_flip() +
@@ -695,11 +733,13 @@ server <- function(input, output) {
       labs(x = "x",
            y = "y", 
            title = "Title") + 
-      scale_fill_manual(values = getColorPalette())
-    
-  }, height = 650) # siehe: https://stackoverflow.com/questions/17838709/scale-and-size-of-plot-in-rstudio-shiny
+      scale_fill_manual(values = getColorPalette()))
   
+  })
   
+  # was hat es mit "height" auf sich? siehe: https://stackoverflow.com/questions/17838709/scale-and-size-of-plot-in-rstudio-shiny}
+  output$barplotFaelleTode <- renderPlot({return(barplotFaelleTode())}, height = 630)
+
 }
 
 # Run the application 
