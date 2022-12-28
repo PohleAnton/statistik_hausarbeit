@@ -496,7 +496,8 @@ ui <- fluidPage(
       radioButtons("varUnterteilungsArt", label = "Wonach sollen die Ausprägungen unterteilt sein?",
                   choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1),
       h5("━━━━━━━━━━"),
-      checkboxInput("varFlipBool", label = "Flip Diagramm (Kann z.B. Balkenbeschriftungen sichtbarer machen)", value = FALSE)
+      checkboxInput("varPercPlotBool", label = "Anteile der Unterteilungen abbilden", value = FALSE),
+      checkboxInput("varFlipBool", label = "Flip Diagramm (kann Beschriftungen besser sichtbar machen)", value = FALSE)
     ),
     mainPanel(
       # für tabsetPanel und tabPanel, siehe: https://shiny.rstudio.com/reference/shiny/0.14/tabsetpanel
@@ -778,26 +779,51 @@ server <- function(input, output) {
     # aber nur bei factors funktioniert (also bei uns bei Monaten und Varianten)
     # ich weiß nicht ob es sinn macht alles plötzlich deshalb zu factors umzuwandeln, da der flip nicht so schlimm ist, lasse ich es daher so
     
-    if(input$varFlipBool == TRUE) {
-      return(getDataFrame() %>% 
-               ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
-               geom_bar(stat = "identity") +
-               coord_flip() + #diese line macht den unterschied
-               theme_minimal() +
-               labs(x = "x",
-                    y = "y", 
-                    title = "Title") + 
-               scale_fill_manual(values = getColorPalette()))
+    if(input$varFlipBool == TRUE) { #falls diagramm geflippt werden soll
+      if(input$varPercPlotBool == TRUE) { #falls die anteile abgebildet werden sollen
+        return(getDataFrame() %>% 
+                 ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
+                 geom_col(position = "fill") + #diese line macht bei verzweigung 2 den unterschied (sie ersetzt "geom_bar")
+                 coord_flip() + #diese line macht bei verzweigung-1 den unterschied
+                 theme_minimal() +
+                 labs(x = "x",
+                      y = "y", 
+                      title = "Title") + 
+                 scale_fill_manual(values = getColorPalette()))
+      }
+      else { #falls nicht die anteile abgebildet werden sollen
+        return(getDataFrame() %>% 
+                 ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
+                 geom_bar(stat = "identity") +
+                 coord_flip() + #diese line macht den unterschied
+                 theme_minimal() +
+                 labs(x = "x",
+                      y = "y", 
+                      title = "Title") + 
+                 scale_fill_manual(values = getColorPalette()))
+      }
     }
-    else {
-      return(getDataFrame() %>% 
-               ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
-               geom_bar(stat = "identity") +
-               theme_minimal() +
-               labs(x = "x",
-                    y = "y", 
-                    title = "Title") + 
-               scale_fill_manual(values = getColorPalette()))
+    else { #wenn das Diagramm nicht geflippt sein soll
+      if(input$varPercPlotBool == TRUE) { #falls die anteile abgebildet werden sollen
+        return(getDataFrame() %>% 
+                 ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
+                 geom_col(position = "fill") + #diese line macht bei verzweigung 2 den unterschied (sie ersetzt "geom_bar")
+                 theme_minimal() +
+                 labs(x = "x",
+                      y = "y", 
+                      title = "Title") + 
+                 scale_fill_manual(values = getColorPalette()))
+      }
+      else { #falls nicht die anteile abgebildet werden sollen
+        return(getDataFrame() %>% 
+                 ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
+                 geom_bar(stat = "identity") +
+                 theme_minimal() +
+                 labs(x = "x",
+                      y = "y", 
+                      title = "Title") + 
+                 scale_fill_manual(values = getColorPalette()))
+      }
     }
     
   })
