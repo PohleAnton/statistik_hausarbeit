@@ -485,18 +485,18 @@ ui <- fluidPage(
                   choices = list("Zeit. Verlauf" = 1, "Merkmal" = 2)),
       conditionalPanel(
         condition = "input.varBetrachtungsArt == 1",
-        radioButtons("varZeitEinheit", label = "Einteilung in:",
+        radioButtons("varZeitEinheit", label = "Unterscheidung nach...",
                      choices = list("Wochen" = 1, "Monate" = 2, "Jahre" = 3), selected = 1)
       ),
       conditionalPanel(
         condition = "input.varBetrachtungsArt == 2",
-        radioButtons("varMerkmalEinheit", label = "Einteilung in:",
+        radioButtons("varMerkmalEinheit", label = "Unterscheidung nach...",
                      choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1)
       ),
       radioButtons("varUnterteilungsArt", label = "Wonach sollen die Ausprägungen unterteilt sein?",
                   choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1),
-      h5("━━━━━━━━"),
-      checkboxInput("varFlipBool", label = "Flip Diagramm", value = FALSE)
+      h5("━━━━━━━━━━"),
+      checkboxInput("varFlipBool", label = "Flip Diagramm (Kann z.B. Balkenbeschriftungen sichtbarer machen)", value = FALSE)
     ),
     mainPanel(
       # für tabsetPanel und tabPanel, siehe: https://shiny.rstudio.com/reference/shiny/0.14/tabsetpanel
