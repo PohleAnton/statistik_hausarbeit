@@ -263,9 +263,9 @@ base <- data
 base <- base[,c('Refdatum', 'Landkreis', 'Geschlecht', 'Altersgruppe', 'AnzahlFall', 'AnzahlTodesfall')]
 
 # char-columns zu factors umwandeln. wie und warum? -> siehe: UMWANDELN VON CHARACTERSPALTEN ZU FACTORS
-base$Geschlecht <- factor(base$Geschlecht, levels = c("M", "unbekannt", "W")) 
+base$Geschlecht <- factor(base$Geschlecht, levels = c("unbekannt", "M", "W")) 
 # ich habe landkreis custom geordnet, da auf die Weise, die nach dem Landkreis aggregierten Fall-Daten (und andere)
-# so nun automatisch und ohne Weiteres in der richtigen, Reihenfolge abgebildet werden (beim späteren barplotFaelleTode)
+# so nun automatisch und ohne Weiteres in der richtigen, Reihenfolge abgebildet werden (beim späteren barPlotFallTot)
 base$Landkreis <- factor(base$Landkreis, levels = rev(c("SK Berlin Mitte", "SK Berlin Neukölln", "SK Berlin Tempelhof-Schöneberg", 
                                                     "SK Berlin Friedrichshain-Kreuzberg", "SK Berlin Charlottenburg-Wilmersdorf", 
                                                     "SK Berlin Pankow", "SK Berlin Reinickendorf", "SK Berlin Spandau", 
@@ -447,10 +447,11 @@ dOmikron$Variante <- factor(dOmikron$Variante, levels = unique(dOmikron$Variante
 
 
 
-
+# ⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿
+# (random zeichen, damit ich beim scrollen direkt sehe, dass ich jetzt bei der ui bin)
 ## SHINY LOGIC:
 # Define UI for application that draws a histogram
-ui <- fluidPage(
+ui <- fluidPage( 
   
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # ----------------------------------------------------------
@@ -493,12 +494,14 @@ ui <- fluidPage(
                      choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1)
       ),
       radioButtons("varUnterteilungsArt", label = "Wonach sollen die Ausprägungen unterteilt sein?",
-                  choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1)
+                  choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1),
+      h5("━━━━━━━━"),
+      checkboxInput("varFlipBool", label = "Flip Diagramm", value = FALSE)
     ),
     mainPanel(
       # für tabsetPanel und tabPanel, siehe: https://shiny.rstudio.com/reference/shiny/0.14/tabsetpanel
       tabsetPanel(
-        tabPanel("Diagramm", plotOutput("barplotFaelleTode")),
+        tabPanel("Diagramm", plotOutput("barPlotFallTot")),
         tabPanel("Zusammenfassung", verbatimTextOutput("zusammenfassung")),
         tabPanel("Beschreibung", textOutput("beschreibung"))
       )
@@ -506,13 +509,19 @@ ui <- fluidPage(
     position = c("left", "right"),
     fluid = FALSE
   ),
-  
-  
-  
+  # br() aus: https://community.rstudio.com/t/spacing-between-plots/2356
+  br(),
+  br(),
+  br(),
+  br(),
+  br(),
 
   # ----------------------------------------------------------
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # ----------------------------------------------------------
+  
+  
+  
   
     sidebarPanel(
       selectInput("Altersgruppe", label="Wählen Sie eine Altersgruppe", choices = list("unbekannt"=1, "0 bis 4 Jahre"=2,"5 bis 14 Jahre"=3, "15 bis 34 Jahre"=4,"35 bis 59 Jahre"=5,"60 bis 79 Jahre"=6,"über 80 Jahre"=7, "Gesamt"=8), selected = 8),
@@ -534,6 +543,7 @@ ui <- fluidPage(
 
 
 
+# ⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿⦿
 server <- function(input, output) {
   
   var_Woche<-reactive({
@@ -649,11 +659,17 @@ server <- function(input, output) {
   # ----------------------------------------------------------
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
+  # ------------------------------------------------------------------------------------- UPDATE-SUMMARY
+  updateSummary <- reactive({
+    # renderPrint() für summarys, nach: https://stackoverflow.com/questions/24701806/r-shiny-output-summary-statistics
+    output$zusammenfassung <- renderPrint({summary(getDataFrame())})
+  })
+  
   # ------------------------------------------------------------------------------------- GET-COLOR-PALETTE
-  # Erstellt und returns eine Farbpalette, die für die farbliche bar-Unterteilung im barplotFaelleTode genutzt wird
+  # Erstellt und returns eine Farbpalette, die für die farbliche bar-Unterteilung im barPlotFallTot genutzt wird
   getColorPalette <- reactive({
 
-    # da im späteren barplotFaelleTode die bars farblich unterteilt werden, braucht es bei vielen unterteilungen color-paletts
+    # da im späteren barPlotFallTot die bars farblich unterteilt werden, braucht es bei vielen unterteilungen color-paletts
     # dafür nutze ich die brewer-paletten, siehe: https://rdrr.io/cran/RColorBrewer/man/ColorBrewer.html
     #
     # speziell nutze ich die "Blues"-Palette für Fälle und die "Reds"-Palette für Tode
@@ -662,7 +678,7 @@ server <- function(input, output) {
     # https://www.datanovia.com/en/blog/easy-way-to-expand-color-palettes-in-r/
 
     # aus: https://htmlcolorcodes.com/
-    if(input$varUnterteilungsArt == 2){return(c("#4CE6EA", "#AAEC4F", "#EC754F"))}
+    if(input$varUnterteilungsArt == 2){return(c("#B7EA4B", "#4BD3EA", "#EA754B"))}
     
     # für switch-case, siehe: https://www.geeksforgeeks.org/switch-case-in-r/
     # warum mache ich alles immer erst zum character? --> weil es bei mir anders warum auch immer nicht funktioniert
@@ -676,7 +692,11 @@ server <- function(input, output) {
                            "3"= 7,
                            "4" = 4)
 
-    return(colorRampPalette(brewer.pal(9, colorType))(as.numeric(numOfSubdivs)))
+    colorPalette <- colorRampPalette(brewer.pal(9, colorType))(as.numeric(numOfSubdivs))
+    
+    colorPalette[1] <- "#E3E3E3" #da die erste farbe nicht sichtbar genug ist
+    
+    return(colorPalette)
 
   })
   
@@ -709,14 +729,46 @@ server <- function(input, output) {
   })
   
   # ------------------------------------------------------------------------------------- GET-X-AXIS-ATTRIBUTE
+  getXatt <- reactive({ #att = attribute
+    df <- getDataFrame()
+    if(input$varBetrachtungsArt == 1) { #betrachtung von zeiteinheiten (wochen, monate, jahre)
+      switch(as.character(input$varZeitEinheit),
+                          "1" = return(df$Woche),
+                          "2" = return(df$Monat),
+                          "3" = return(df$Jahr))
+    }
+    else { #betrachtung von merkmalen
+      switch(as.character(input$varMerkmalEinheit),
+             "1" = return(df$Landkreis),
+             "2" = return(df$Geschlecht),
+             "3" = return(df$Altersgruppe),
+             "4" = return(df$Variante))
+    }
+  })
   
+  # ------------------------------------------------------------------------------------- GET-Y-AXIS-ATTRIBUTE
+  getYatt <- reactive({
+    df <- getDataFrame()
+    switch(as.character(input$varUntersuchungsMerkmal),
+           "1" = return(df$AnzahlFall),
+           "2" = return(df$AnzahlTodesfall))
+  })
+  
+  # ------------------------------------------------------------------------------------- GET-UNTERTEILUNGS-ATT
+  getUnterteilungsAtt <- reactive({ #att = attribute
+    df <- getDataFrame()
+    switch(as.character(input$varUnterteilungsArt),
+           "1" = return(df$Landkreis),
+           "2" = return(df$Geschlecht),
+           "3" = return(df$Altersgruppe),
+           "4" = return(df$Variante))
+  })
   
   # ------------------------------------------------------------------------------------- BUILD PLOT
-  barplotFaelleTode <- reactive({
+  barPlotFallTot <- reactive({
+
+    updateSummary()
     
-    # bekommt den zu untersuchenden dataframe
-    df <- d20
-  
     # für folgendes code-Verständnis: siehe https://www.youtube.com/watch?v=n_ACYLWUmos
     # und unter: http://www.sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization
     #
@@ -725,21 +777,34 @@ server <- function(input, output) {
     # https://stackoverflow.com/questions/34227967/reversed-order-after-coord-flip-in-r
     # aber nur bei factors funktioniert (also bei uns bei Monaten und Varianten)
     # ich weiß nicht ob es sinn macht alles plötzlich deshalb zu factors umzuwandeln, da der flip nicht so schlimm ist, lasse ich es daher so
-    return(getDataFrame() %>% 
-      ggplot(aes(x = Woche, y = AnzahlFall, fill = Altersgruppe)) +
-      geom_bar(stat = "identity") +
-      coord_flip() +
-      theme_minimal() +
-      labs(x = "x",
-           y = "y", 
-           title = "Title") + 
-      scale_fill_manual(values = getColorPalette()))
-  
+    
+    if(input$varFlipBool == TRUE) {
+      return(getDataFrame() %>% 
+               ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
+               geom_bar(stat = "identity") +
+               coord_flip() + #diese line macht den unterschied
+               theme_minimal() +
+               labs(x = "x",
+                    y = "y", 
+                    title = "Title") + 
+               scale_fill_manual(values = getColorPalette()))
+    }
+    else {
+      return(getDataFrame() %>% 
+               ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
+               geom_bar(stat = "identity") +
+               theme_minimal() +
+               labs(x = "x",
+                    y = "y", 
+                    title = "Title") + 
+               scale_fill_manual(values = getColorPalette()))
+    }
+    
   })
   
   # was hat es mit "height" auf sich? siehe: https://stackoverflow.com/questions/17838709/scale-and-size-of-plot-in-rstudio-shiny}
-  output$barplotFaelleTode <- renderPlot({return(barplotFaelleTode())}, height = 630)
-
+  output$barPlotFallTot <- renderPlot({return(barPlotFallTot())}, height = 670)
+  
 }
 
 # Run the application 
