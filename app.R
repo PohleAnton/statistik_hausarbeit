@@ -219,7 +219,8 @@ base <- cbind(base, Monat = cMonths)
 cMonthsImpf <- strftime(impf$Impfdatum, format = "%m")
 cMonthsImpf <- sub("^0+", "", cMonthsImpf)
 cMonthsImpf <- as.numeric(cMonthsImpf)
-impf <- cbind(impf, Monate = cMonthsImpf)
+cMonthsImpf <- month.abb[cMonthsImpf]
+impf <- cbind(impf, Monat = cMonthsImpf)
 
 # ------------------------------------------------------------------------------------- jahresspalte
 # year-column für base erstellen
@@ -238,7 +239,7 @@ base <- cbind(base, Jahr = cYears)
 cYearsImpf <- strftime(impf$Impfdatum, format = "%Y")
 cYearsImpf <- sub("^0+", "", cYearsImpf)
 cYearsImpf <- as.numeric(cYearsImpf)
-impf <- cbind(impf, Jahre = cYearsImpf)
+impf <- cbind(impf, Jahr = cYearsImpf)
 
 # ------------------------------------------------------------------------------------- covid-variante-spalte
 # ausgehend von den Zeiträumen, in denen jeweilige Variante vorherrschend war
@@ -289,18 +290,26 @@ impf <- impf %>%
 d20 <- base[base$Refdatum >= '2020-01-01' & base$Refdatum < '2021-01-01',]
 d20weeks <- base[base$Refdatum >= '2019-12-30' & base$Refdatum <= '2021-01-03',]
 
+impf20 <- impf[impf$Jahr == 2020,]
+impf20weeks <- impf[impf$WochenJahr == "2020",]
 # ------------------------------------------------------------------------------------- 2021
 d21 <- base[base$Refdatum >= '2021-01-01' & base$Refdatum < '2022-01-01',]
 d21weeks <- base[base$Refdatum >= '2021-01-04' & base$Refdatum <= '2022-01-02',]
 
+impf21 <- impf[impf$Jahr == 2021,]
+impf21weeks <- impf[impf$WochenJahr == "2021",]
 # ------------------------------------------------------------------------------------- 2022
 d22 <- base[base$Refdatum >= '2022-01-01' & base$Refdatum < '2023-01-01',]
 d22weeks <- base[base$Refdatum >= '2022-01-03' & base$Refdatum <= '2023-01-01',]
 
+impf22 <- impf[impf$Jahr == 2022,]
+impf22weeks <- impf[impf$WochenJahr == "2022",]
 # ------------------------------------------------------------------------------------- 2023
 d23 <- base[base$Refdatum >= '2023-01-01' & base$Refdatum < '2024-01-01',]
 d23weeks <- base[base$Refdatum >= '2023-01-02' & base$Refdatum <= '2023-12-31',]
 
+impf23 <- impf[impf$Jahr == 2023,]
+impf23weeks <- impf[impf$WochenJahr == "2023",]
 
 
 
@@ -388,6 +397,12 @@ dDelta$Variante <- factor(dDelta$Variante, levels = unique(dDelta$Variante))
 dOmikron$Woche <- factor(dOmikron$Woche, levels = unique(dOmikron$Woche))
 dOmikron$Monat <- factor(dOmikron$Monat, levels = unique(dOmikron$Monat))
 dOmikron$Variante <- factor(dOmikron$Variante, levels = unique(dOmikron$Variante))
+
+impf$Monat <- factor(impf$Monat, levels = unique(impf$Monat))
+impf20$Monat <- factor(impf20$Monat, levels = unique(impf20$Monat))
+impf21$Monat <- factor(impf21$Monat, levels = unique(impf21$Monat))
+impf22$Monat <- factor(impf22$Monat, levels = unique(impf22$Monat))
+impf23$Monat <- factor(impf23$Monat, levels = unique(impf23$Monat))
 
 
 
