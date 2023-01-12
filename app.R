@@ -517,7 +517,6 @@ ui <- fluidPage(
   
   # Application title
   titlePanel("Covid19 - Berlin"),
-  
   sidebarLayout(
     sidebarPanel(
       radioButtons("varUntersuchungsMerkmal", label = "Sollen Fälle oder Todesfälle untersucht werden?",
@@ -567,25 +566,15 @@ ui <- fluidPage(
   # br() aus: https://community.rstudio.com/t/spacing-between-plots/2356
   br(),
   br(),
-  br(),
-  br(),
-  br(),
+  h2("Impfungen in Berlin - Covid19"),
   sidebarLayout(
-    sidebarPanel(br(),
-                 br(),
-                 br(),
-                 br(),
-                 br(),
-                 br(),
-                 br(),
-                 br(),
-                 br(),
-                 br(),
-                 br(),
-                 br(),
-                 br(),
-                 br(),
-                 br()),
+    sidebarPanel(
+      sliderInput("varImpfJahr", label = "Jahr",
+                  min = 2020, max = 2023, value = 2021),
+      radioButtons("varImpfZeitEinheit", label = "Pro...",
+                   choices = list("Woche" = 1, "Monat" = 2, "Jahr" = 3), selected = 1),
+      checkboxInput("varImpfPercPlotBool", label = "Anteile der Unterteilungen abbilden", value = FALSE)
+    ),
     mainPanel(plotOutput("barPlotImpf"))
   ),
 
@@ -934,15 +923,46 @@ server <- function(input, output) {
   # was hat es mit "height" auf sich? siehe: https://stackoverflow.com/questions/17838709/scale-and-size-of-plot-in-rstudio-shiny}
   output$barPlotFallTot <- renderPlot({return(barPlotFallTot())}, height = 670)
   
+  
+  
+  
+  getImpfDF <- reactive({
+    switch(as.character(input$varImpfJahr),
+           "2020" = return(impf20),
+           "2021" = return(impf21),
+           "2022" = return(impf22),
+           "2023" = return(impf23))
+  })
+  
+  getImpfX <- reactive({
+    switch(as.character(input$varImpfZeitEinheit),
+           "1" = return(getImpfDF()$Woche),
+           "2" = return(getImpfDF()$Monat),
+           "3" = return(getImpfDF()$Jahr))
+  })
+  
   barPlotImpf <- reactive({
-    return(impf %>% 
-      ggplot(aes(x = Jahre, y = Anzahl, fill = ImpfstoffGruppiert)) +
-      geom_bar(stat = "identity") +
-      theme_minimal() +
-      labs(x = "x",
-           y = "y", 
-           title = "Title") + 
-      scale_fill_manual(values = brewer.pal(6, "Greens")))
+    if(input$varImpfPercPlotBool == TRUE) {
+      return(getImpfDF() %>% 
+               ggplot(aes(x = getImpfX(), y = getImpfDF()$Anzahl, fill = getImpfDF()$ImpfstoffGruppiert)) +
+               geom_col(position = "fill") +
+               theme_minimal() +
+               labs(x = "x",
+                    y = "y", 
+                    title = "Title") + 
+               scale_fill_manual(values = rev(c("#006d2c", "#238b45", "#41ab5d", "#74c476", "#a1d99b", "#c7e9c0"))))
+    }
+    else {
+      return(getImpfDF() %>% 
+               ggplot(aes(x = getImpfX(), y = getImpfDF()$Anzahl, fill = getImpfDF()$ImpfstoffGruppiert)) +
+               geom_bar(stat = "identity") +
+               theme_minimal() +
+               labs(x = "x",
+                    y = "y", 
+                    title = "Title") + 
+               scale_fill_manual(values = rev(c("#006d2c", "#238b45", "#41ab5d", "#74c476", "#a1d99b", "#c7e9c0"))))
+    }
+    
   })
   
   output$barPlotImpf <- renderPlot({return(barPlotImpf())})
