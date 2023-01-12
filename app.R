@@ -169,12 +169,14 @@ base <- base[,c('Refdatum', 'Landkreis', 'Geschlecht', 'Altersgruppe', 'AnzahlFa
 # char-columns zu factors umwandeln. wie und warum? -> siehe: UMWANDELN VON CHARACTERSPALTEN ZU FACTORS
 base$Geschlecht <- factor(base$Geschlecht, levels = c("unbekannt", "M", "W")) 
 # ich habe landkreis custom geordnet, da auf die Weise, die nach dem Landkreis aggregierten Fall-Daten (und andere)
-# so nun automatisch und ohne Weiteres in der richtigen, Reihenfolge abgebildet werden (beim späteren barPlotFallTot)
+# so nun automatisch und ohne Weiteres in der richtigen, Reihenfolge abgebildet werden (beim späteren barPlotFallTot) (stimmt aber tz nicht immer)
 base$Landkreis <- factor(base$Landkreis, levels = rev(c("SK Berlin Mitte", "SK Berlin Neukölln", "SK Berlin Tempelhof-Schöneberg", 
                                                     "SK Berlin Friedrichshain-Kreuzberg", "SK Berlin Charlottenburg-Wilmersdorf", 
                                                     "SK Berlin Pankow", "SK Berlin Reinickendorf", "SK Berlin Spandau", 
                                                     "SK Berlin Steglitz-Zehlendorf", "SK Berlin Lichtenberg", 
                                                     "SK Berlin Treptow-Köpenick", "SK Berlin Marzahn-Hellersdorf")))
+
+impf <- impfungen
 
 # ------------------------------------------------------------------------------------- WEITERE RELEVANTE MERKMALE ALS SPALTEN HINZUFÜGEN
 # ------------------------------------------------------------------------------------- wochenspalte
@@ -189,6 +191,12 @@ cWeeks <- as.numeric(cWeeks)
 
 # cWeeks an base ranhängen
 base <- cbind(base, Woche = cWeeks)
+
+# für impf
+cWeeksImpf <- strftime(impf$Impfdatum, format = "%V")
+cWeeksImpf <- sub("^0+", "", cWeeksImpf)
+cWeeksImpf <- as.numeric(cWeeksImpf)
+impf <- cbind(impf, Woche = cWeeksImpf)
 
 # ------------------------------------------------------------------------------------- monatsspalte
 # month-column für base erstellen
@@ -207,6 +215,12 @@ cMonths <- month.abb[cMonths]
 # cMonths an base ranhängen
 base <- cbind(base, Monat = cMonths)
 
+# für impf
+cMonthsImpf <- strftime(impf$Impfdatum, format = "%m")
+cMonthsImpf <- sub("^0+", "", cMonthsImpf)
+cMonthsImpf <- as.numeric(cMonthsImpf)
+impf <- cbind(impf, Monate = cMonthsImpf)
+
 # ------------------------------------------------------------------------------------- jahresspalte
 # year-column für base erstellen
 cYears <- strftime(base$Refdatum, format = "%Y")
@@ -219,6 +233,12 @@ cYears <- as.numeric(cYears)
 
 # cYears an base ranhängen
 base <- cbind(base, Jahr = cYears)
+
+# für impf
+cYearsImpf <- strftime(impf$Impfdatum, format = "%Y")
+cYearsImpf <- sub("^0+", "", cYearsImpf)
+cYearsImpf <- as.numeric(cYearsImpf)
+impf <- cbind(impf, Jahre = cYearsImpf)
 
 # ------------------------------------------------------------------------------------- covid-variante-spalte
 # ausgehend von den Zeiträumen, in denen jeweilige Variante vorherrschend war
@@ -236,6 +256,15 @@ base <- base %>%
     Refdatum > '2021-03-01' & Refdatum <= '2021-06-20' ~ "alpha",
     Refdatum > '2021-06-20' & data$Refdatum <= '2021-12-26' ~ "delta",
     Refdatum > '2021-12-26' ~ "omikron"
+  ))
+
+# ------------------------------------------------------------------------------------- spalte für impf die das wochenproblem fixt
+impf <- impf %>%
+  mutate(WochenJahr = case_when(
+    Impfdatum >= '2019-12-30' & Impfdatum < '2021-01-03' ~ "2020",
+    Impfdatum >= '2021-01-04' & Impfdatum < '2022-01-02' ~ "2021",
+    Impfdatum >= '2022-01-03' & Impfdatum < '2023-01-01' ~ "2022",
+    Impfdatum >= '2023-01-02' & Impfdatum < '2023-12-31' ~ "2023"
   ))
 
 # ------------------------------------------------------------------------------------- EINTEILUNG IN ZEITRÄUME
@@ -365,7 +394,7 @@ dOmikron$Variante <- factor(dOmikron$Variante, levels = unique(dOmikron$Variante
 aggCasesPerDay20 <- aggregate(AnzahlFall ~ Refdatum, FUN = sum, data = d20weeks)
 aggCasesPerWeek20 <- aggregate(AnzahlFall ~ Woche, FUN = sum, data = d20weeks)
 ##Problem: ich versuche hiermit die wochen tabelle zu ordnen, klappt auch irgendwie
-## aber im server-code (habe ich auskommentiert), ist der barplot den ich daraus mache immernoch fcking falsch sortiert... hääääääääääää?????
+## aber im server-code (habe ich auskommentiert oder at this point schon gelöscht), ist der barplot den ich daraus mache immernoch fcking falsch sortiert... hääääääääääää?????
 testSortedCpW20 <- aggCasesPerWeek20[order(as.numeric(as.character(aggCasesPerWeek20$Woche))),]
 
 maxCasesPerDay20 <- max(aggCasesPerDay20$AnzahlFall)
@@ -426,6 +455,8 @@ aggDeathsPerWeek23<-aggregate(AnzahlTodesfall ~ Woche, FUN = sum, data = d23week
 
 maxDeathsPerDay23 <- max(aggDeathsPerDay23$AnzahlTodesfall)
 maxDeathsPerWeek23 <- max(aggDeathsPerWeek23$AnzahlTodesfall)
+
+# ------------------------------------------------------------------------------------- 
 
 
 ##wird benötigt, um die y-Achse in der Auswertung der Todesfälle im Verhältnis zu den
