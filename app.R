@@ -472,6 +472,8 @@ maxDeathsPerWeek23 <- max(aggDeathsPerWeek23$AnzahlTodesfall)
 
 ##wird benötigt, um die y-Achse in der Auswertung der Todesfälle im Verhältnis zu den
 ##verabreichten Impfungen zu skalieren
+helper20<-aggregate(cbind(AnzahlFall, AnzahlTodesfall)~Woche, FUN = sum, data = d20weeks)
+value_helper20<-max(helper20$AnzahlTodesfall/helper20$AnzahlFall)
 helper21<-aggregate(cbind(AnzahlFall, AnzahlTodesfall)~Woche, FUN = sum, data = d21weeks)
 value_helper21<-max(helper21$AnzahlTodesfall/helper21$AnzahlFall)
 helper22<-aggregate(cbind(AnzahlFall, AnzahlTodesfall)~Woche, FUN = sum, data = d22weeks)
@@ -592,8 +594,8 @@ ui <- fluidPage(
   br(),
   br(),
   br(),
-    sidebarPanel(      sliderInput(inputId="Woche", label="KalenderWoche", min=1, max=53, value=1),
-                       radioButtons("Jahr", label="Welches Kalenderjahr soll betrachtet werden?", choices=list("2021"=1, "2022"=2, "2023"=3), selected=1)),
+    sidebarPanel(      sliderInput(inputId="Woche", label="KalenderWoche", min=1, max=52, value=1),
+                       radioButtons("Jahr", label="Welches Kalenderjahr soll betrachtet werden?", choices=list("2021"=1, "2022"=2), selected=1)),
     
   mainPanel(
     plotOutput("impfungen_Woche"),
@@ -620,13 +622,24 @@ server <- function(input, output) {
                   ##2 Wochen vorher, weil eine Wirksamkeit der Impfstoffe erst nach 2 Wochen angenommen wird
                   ##dies wurde kurz mit Prof. Spott besprochen, auf weitere Belege wird an dieser Stelle verzichtet
   var_jahr<-reactive({
-    gesamt<-
-    switch(
-      as.character(input$Jahr),
-      "1" = return (c(sum(d21weeks$AnzahlFall[d21weeks$Woche==var_Woche()]), (helper21$AnzahlTodesfall[helper21$Woche==var_Woche()]/helper21$AnzahlFall[helper21$Woche==var_Woche()]), impfungen_b$Impfungen_Gesamt[(impfungen_b$Woche==var_Woche()-2)&(impfungen_b$Jahr==2021)])),
-      "2" = return (c(sum(d22weeks$AnzahlFall[d22weeks$Woche==var_Woche()]), (helper22$AnzahlTodesfall[helper22$Woche==var_Woche()]/helper22$AnzahlFall[helper22$Woche==var_Woche()]), impfungen_b$Impfungen_Gesamt[(impfungen_b$Woche==var_Woche()-2)&(impfungen_b$Jahr==2022)])),
-      "3" = return (c(sum(d23weeks$AnzahlFall[d23weeks$Woche==var_Woche()]), (helper23$AnzahlTodesfall[helper23$Woche==var_Woche()]/helper23$AnzahlFall[helper23$Woche==var_Woche()]), impfungen_b$Impfungen_Gesamt[(impfungen_b$Woche==var_Woche()-2)&(impfungen_b$Jahr==2023)]))
-
+    
+    if (var_Woche()==1)(
+      switch (as.character(input$Jahr),
+              "1" = return (c(sum(d21weeks$AnzahlFall[d21weeks$Woche==var_Woche()]), (helper21$AnzahlTodesfall[helper21$Woche==var_Woche()]/helper21$AnzahlFall[helper21$Woche==var_Woche()]), max(impfungen_b$Impfungen_Gesamt[(impfungen_b$Woche==max(impfungen_b$Woche)-1)&(impfungen_b$Jahr==2020)]))),
+              "2" = return (c(sum(d22weeks$AnzahlFall[d22weeks$Woche==var_Woche()]), (helper22$AnzahlTodesfall[helper22$Woche==var_Woche()]/helper22$AnzahlFall[helper22$Woche==var_Woche()]),max(impfungen_b$Impfungen_Gesamt[(impfungen_b$Woche==max(impfungen_b$Woche)-2)&(impfungen_b$Jahr==2021)])))
+      )
+    )
+    if (var_Woche()==2)(
+      switch (as.character(input$Jahr),
+              "1" = return (c(sum(d21weeks$AnzahlFall[d21weeks$Woche==var_Woche()]), (helper21$AnzahlTodesfall[helper21$Woche==var_Woche()]/helper21$AnzahlFall[helper21$Woche==var_Woche()]),impfungen_b$Impfungen_Gesamt[(impfungen_b$Woche==max(impfungen_b$Woche))&(impfungen_b$Jahr==2020)])),
+              "2" = return (c(sum(d22weeks$AnzahlFall[d22weeks$Woche==var_Woche()]), (helper22$AnzahlTodesfall[helper22$Woche==var_Woche()]/helper22$AnzahlFall[helper22$Woche==var_Woche()]),max(impfungen_b$Impfungen_Gesamt[(impfungen_b$Woche==max(impfungen_b$Woche)-1)&(impfungen_b$Jahr==2021)])))
+      ))
+    else(
+      switch(
+        as.character(input$Jahr),
+        "1" = return (c(sum(d21weeks$AnzahlFall[d21weeks$Woche==var_Woche()]), (helper21$AnzahlTodesfall[helper21$Woche==var_Woche()]/helper21$AnzahlFall[helper21$Woche==var_Woche()]), impfungen_b$Impfungen_Gesamt[(impfungen_b$Woche==var_Woche()-2)&(impfungen_b$Jahr==2021)])),
+        "2" = return (c(sum(d22weeks$AnzahlFall[d22weeks$Woche==var_Woche()]), (helper22$AnzahlTodesfall[helper22$Woche==var_Woche()]/helper22$AnzahlFall[helper22$Woche==var_Woche()]),impfungen_b$Impfungen_Gesamt[(impfungen_b$Woche==var_Woche()-2)&(impfungen_b$Jahr==2022)]))
+      )
     )
   })
   
@@ -634,7 +647,7 @@ server <- function(input, output) {
   ##die y-Achsen sind hier unterschiedlich! Ich weiß nicht so recht, wie damit umzugehen - aktuell ist das 
   ##maximum immer der maximal vorkommende wert - so verhalten sich immerhin alle 3 Plots zu ihrem maximum (also quasi zu 100%)
   output$impfungen_Woche<-renderPlot(barplot(main="Anzahl der INSGESAMT verabreichten Impfdosen bis vor 2 Wochen",var_jahr()[3],ylim=c(0,max(impfungen_b$Impfungen_Gesamt))))
-  output$tode_Woche<-renderPlot(barplot(main="Prozentualer Anteil Todesfälle ",var_jahr()[2],ylim=c(0,value_helper21)))
+  output$tode_Woche<-renderPlot(barplot(main="Prozentualer Anteil Todesfälle ",var_jahr()[2],ylim=c(0,max(value_helper21, value_helper22))))
 
                          
   ##gibt reduzierte Datensätze zurück - im jeweiligen Zeitraum war die Variante mit >50% vertreten
