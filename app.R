@@ -267,6 +267,17 @@ impf <- impf %>%
     Impfdatum >= '2023-01-02' & Impfdatum < '2023-12-31' ~ "2023"
   ))
 
+# ------------------------------------------------------------------------------------- spalte für impf die impfstoffe zusammenfasst
+impf <- impf %>%
+  mutate(ImpfstoffGruppiert = case_when(
+    Impfstoff == "Comirnaty" | Impfstoff == "Comirnaty-Kleinkinder" | Impfstoff == "Comirnaty bivalent (Original/Omikron)" ~ "Comirnaty",
+    Impfstoff == "Jcovden" ~ "Jcovden",
+    Impfstoff == "Nuvaxovid" ~ "Nuvaxovid",
+    Impfstoff == "Spikevax" | Impfstoff == "Spikevax bivalent (Original/Omikron)" ~ "Spikevax",
+    Impfstoff == "Valneva" ~ "Valneva",
+    Impfstoff == "Vaxzevria" ~ "Vaxzevria"
+  ))
+
 # ------------------------------------------------------------------------------------- EINTEILUNG IN ZEITRÄUME
 # Unterteilung in einen Datensatz für den gesamten Zeitraum, durch welchen nach Tagen/Monaten aggregiert werden kann (d = data)
 # und einen für die Wochen eines Jahres, denn:
@@ -542,6 +553,24 @@ ui <- fluidPage(
   br(),
   br(),
   br(),
+  sidebarLayout(
+    sidebarPanel(br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br()),
+    mainPanel(plotOutput("barPlotImpf"))
+  ),
 
   # ----------------------------------------------------------
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -876,6 +905,19 @@ server <- function(input, output) {
   
   # was hat es mit "height" auf sich? siehe: https://stackoverflow.com/questions/17838709/scale-and-size-of-plot-in-rstudio-shiny}
   output$barPlotFallTot <- renderPlot({return(barPlotFallTot())}, height = 670)
+  
+  barPlotImpf <- reactive({
+    return(impf %>% 
+      ggplot(aes(x = Jahre, y = Anzahl, fill = ImpfstoffGruppiert)) +
+      geom_bar(stat = "identity") +
+      theme_minimal() +
+      labs(x = "x",
+           y = "y", 
+           title = "Title") + 
+      scale_fill_manual(values = brewer.pal(6, "Greens")))
+  })
+  
+  output$barPlotImpf <- renderPlot({return(barPlotImpf())})
   
 }
 
