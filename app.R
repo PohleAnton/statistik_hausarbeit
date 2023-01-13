@@ -659,8 +659,8 @@ server <- function(input, output) {
   
   ##die y-Achsen sind hier unterschiedlich! Ich weiß nicht so recht, wie damit umzugehen - aktuell ist das 
   ##maximum immer der maximal vorkommende wert - so verhalten sich immerhin alle 3 Plots zu ihrem maximum (also quasi zu 100%)
-  output$impfungen_Woche<-renderPlot(barplot(main="Anzahl der INSGESAMT verabreichten Impfdosen bis vor 2 Wochen",var_jahr()[3],ylim=c(0,max(impfungen_b$Impfungen_Gesamt)), col="#c5f587"))
-  output$tode_Woche<-renderPlot(barplot(main="Prozentualer Anteil Todesfälle ",var_jahr()[2],ylim=c(0,max(value_helper21, value_helper22)), col="#f58787"))
+  output$impfungen_Woche<-renderPlot(barplot(main="Anzahl der INSGESAMT verabreichten IMPFDOSEN bis vor 2 Wochen",var_jahr()[3],ylim=c(0,max(impfungen_b$Impfungen_Gesamt)), col="#c5f587"))
+  output$tode_Woche<-renderPlot(barplot(main="Prozentualer Anteil TODESFÄLLE ",var_jahr()[2],ylim=c(0,max(value_helper21, value_helper22)), col="#f58787"))
 
                          
   ##gibt reduzierte Datensätze zurück - im jeweiligen Zeitraum war die Variante mit >50% vertreten
