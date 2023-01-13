@@ -27,6 +27,17 @@ data$Refdatum<-as.Date(data$Refdatum)
 ## Die daten werden nun nach dem referenzdatum sortiert
 data <- data[order(data$Refdatum),]
 
+bevoelkerung<-read.csv2("./Data/bevoelkerung.csv", header = T, sep = ";")
+bevoelkerung$Geschlecht <- factor(bevoelkerung$Geschlecht, levels = c("M", "W")) 
+bevoelkerung$Nationalität<-factor(bevoelkerung$Nationalität, levels=c("D","A"))
+bevoelkerung$Landkreis<-factor(bevoelkerung$Landkreis, levels= rev(c("SK Berlin Mitte","SK Berlin Friedrichshain-Kreuzberg","SK Berlin Pankow", 
+                                                                     "SK Berlin Charlottenburg-Wilmersdorf", "SK Berlin Spandau",  
+                                                                     "SK Berlin Steglitz-Zehlendorf","SK Berlin Tempelhof-Schöneberg", 
+                                                                     "SK Berlin Neukölln","SK Berlin Treptow-Köpenick","SK Berlin Marzahn-Hellersdorf",
+                                                                     "SK Berlin Lichtenberg", "SK Berlin Reinickendorf",
+                                                                     "Berlin")))
+
+
 ##Daten über die Impfkampangne vom RKI, sortiert nach bundesländern:
 ##https://github.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/blob/master/Aktuell_Deutschland_Bundeslaender_COVID-19-Impfungen.csv
 
@@ -171,10 +182,10 @@ base$Geschlecht <- factor(base$Geschlecht, levels = c("unbekannt", "M", "W"))
 # ich habe landkreis custom geordnet, da auf die Weise, die nach dem Landkreis aggregierten Fall-Daten (und andere)
 # so nun automatisch und ohne Weiteres in der richtigen, Reihenfolge abgebildet werden (beim späteren barPlotFallTot) (stimmt aber tz nicht immer)
 base$Landkreis <- factor(base$Landkreis, levels = rev(c("SK Berlin Mitte", "SK Berlin Neukölln", "SK Berlin Tempelhof-Schöneberg", 
-                                                    "SK Berlin Friedrichshain-Kreuzberg", "SK Berlin Charlottenburg-Wilmersdorf", 
-                                                    "SK Berlin Pankow", "SK Berlin Reinickendorf", "SK Berlin Spandau", 
-                                                    "SK Berlin Steglitz-Zehlendorf", "SK Berlin Lichtenberg", 
-                                                    "SK Berlin Treptow-Köpenick", "SK Berlin Marzahn-Hellersdorf")))
+                                                        "SK Berlin Friedrichshain-Kreuzberg", "SK Berlin Charlottenburg-Wilmersdorf", 
+                                                        "SK Berlin Pankow", "SK Berlin Reinickendorf", "SK Berlin Spandau", 
+                                                        "SK Berlin Steglitz-Zehlendorf", "SK Berlin Lichtenberg", 
+                                                        "SK Berlin Treptow-Köpenick", "SK Berlin Marzahn-Hellersdorf")))
 
 impf <- impfungen
 
@@ -547,7 +558,7 @@ ui <- fluidPage(
                      choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1)
       ),
       radioButtons("varUnterteilungsArt", label = "Wonach sollen die Ausprägungen unterteilt sein?",
-                  choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1),
+                   choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1),
       h5("━━━━━━━━━━"),
       checkboxInput("varPercPlotBool", label = "Anteile der Unterteilungen abbilden", value = FALSE),
       checkboxInput("varFlipBool", label = "Flip Diagramm (kann Beschriftungen besser sichtbar machen)", value = FALSE)
@@ -580,7 +591,7 @@ ui <- fluidPage(
   br(),
   br(),
   h2("Relation: Anz. Infektionen und Anz. Todesfälle - im Bezug auf die Altersgruppe"),
-
+  
   # ----------------------------------------------------------
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # ----------------------------------------------------------
@@ -588,11 +599,11 @@ ui <- fluidPage(
   
   
   
-    sidebarPanel(
-      selectInput("Altersgruppe", label="Wählen Sie eine Altersgruppe", choices = list("unbekannt"=1, "0 bis 4 Jahre"=2,"5 bis 14 Jahre"=3, "15 bis 34 Jahre"=4,"35 bis 59 Jahre"=5,"60 bis 79 Jahre"=6,"über 80 Jahre"=7, "Gesamt"=8), selected = 8),
-      radioButtons("Variante", label="Welche Virusvariante soll betrachtet werden?", choices = list("Urtyp"=1, "Alpha"=2, "Delta"=3, "Omikron"=4, "Alle zusammen"=5), selected = 5)
-
-      ),
+  sidebarPanel(
+    selectInput("Altersgruppe", label="Wählen Sie eine Altersgruppe", choices = list("unbekannt"=1, "0 bis 4 Jahre"=2,"5 bis 14 Jahre"=3, "15 bis 34 Jahre"=4,"35 bis 59 Jahre"=5,"60 bis 79 Jahre"=6,"über 80 Jahre"=7, "Gesamt"=8), selected = 8),
+    radioButtons("Variante", label="Welche Virusvariante soll betrachtet werden?", choices = list("Urtyp"=1, "Alpha"=2, "Delta"=3, "Omikron"=4, "Alle zusammen"=5), selected = 5)
+    
+  ),
   mainPanel(
     textOutput("TextAlter"),
     plotOutput("VerhaeltnisAlter")
@@ -601,9 +612,9 @@ ui <- fluidPage(
   br(),
   br(),
   h2("Relation zwischen total verabreichten IMPFDOSEN und prozentualer TODESRATE nach Infektion"),
-    sidebarPanel(      sliderInput(inputId="Woche", label="KalenderWoche", min=1, max=52, value=1),
-                       radioButtons("Jahr", label="Welches Kalenderjahr soll betrachtet werden?", choices=list("2021"=1, "2022"=2), selected=1)),
-    
+  sidebarPanel(      sliderInput(inputId="Woche", label="KalenderWoche", min=1, max=52, value=1),
+                     radioButtons("Jahr", label="Welches Kalenderjahr soll betrachtet werden?", choices=list("2021"=1, "2022"=2), selected=1)),
+  
   mainPanel(
     fluidRow(
       column(6, align="right",
@@ -632,8 +643,8 @@ server <- function(input, output) {
   ##var_jahr()[1]: die Fälle pro Woche
   ##var_jahr()[2]: die todesfälle pro Woche
   ##var_jahr()[3]: kumulierte Anzahl der Impfungen 2 Woche vor der gewählten Kalenderwoche 
-                  ##2 Wochen vorher, weil eine Wirksamkeit der Impfstoffe erst nach 2 Wochen angenommen wird
-                  ##dies wurde kurz mit Prof. Spott besprochen, auf weitere Belege wird an dieser Stelle verzichtet
+  ##2 Wochen vorher, weil eine Wirksamkeit der Impfstoffe erst nach 2 Wochen angenommen wird
+  ##dies wurde kurz mit Prof. Spott besprochen, auf weitere Belege wird an dieser Stelle verzichtet
   var_jahr<-reactive({
     
     if (var_Woche()==1)(
@@ -661,8 +672,8 @@ server <- function(input, output) {
   ##maximum immer der maximal vorkommende wert - so verhalten sich immerhin alle 3 Plots zu ihrem maximum (also quasi zu 100%)
   output$impfungen_Woche<-renderPlot(barplot(main="Anzahl der INSGESAMT verabreichten IMPFDOSEN bis vor 2 Wochen",var_jahr()[3],ylim=c(0,max(impfungen_b$Impfungen_Gesamt)), col="#c5f587"))
   output$tode_Woche<-renderPlot(barplot(main="Prozentualer Anteil TODESFÄLLE ",var_jahr()[2],ylim=c(0,max(value_helper21, value_helper22)), col="#f58787"))
-
-                         
+  
+  
   ##gibt reduzierte Datensätze zurück - im jeweiligen Zeitraum war die Variante mit >50% vertreten
   var_variant<-reactive({
     switch(
@@ -672,9 +683,9 @@ server <- function(input, output) {
       "3" = return (dDelta),
       "4" = return (dOmikron),
       "5" = return (base)
-      )
+    )
   })
-
+  
   
   ##dieser Funktion gibt Werte in Abhängigkeit des  gewählten Altes aus - ich schlage vor, dass weitere altersabhängige Werte ebenfalls hier erfasst werden - solange die Reihenfolge erhalten bleibt, sollte das kein Problem sein.
   ##aktuell gibt var_age()[1] die Fallzahl abhängig vom Alter, var_age()[2] die Anzahl der Todesfälle abhängig vom Alter zurück. Ggf. in diesem Stil weiter dokumentieren
@@ -689,7 +700,7 @@ server <- function(input, output) {
     if(input$Altersgruppe == 8)({
       return (c(sum(var_variant()$AnzahlFall),sum(var_variant()$AnzahlTodesfall), signif((sum(var_variant()$AnzahlTodesfall)/sum(var_variant()$AnzahlFall))*100,digits=digitVal)))
     })
-
+    
     stringAltersgruppe <- switch(
       as.character(input$Altersgruppe),
       "1" = "unbekannt",
@@ -702,12 +713,12 @@ server <- function(input, output) {
     )
     
     return (c(sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe==stringAltersgruppe]),sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe==stringAltersgruppe]),signif((sum(var_variant()$AnzahlTodesfall[var_variant()$Altersgruppe==stringAltersgruppe])/sum(var_variant()$AnzahlFall[var_variant()$Altersgruppe==stringAltersgruppe]))*100,digits=digitVal)))
-
+    
   })
   
   output$TextAlter<-renderText({paste0("Anzahl der Infektionen in der gewählten Altersgruppe insgesamt:", var_age()[1], " davon Todesfälle: ",  var_age()[2], " (",var_age()[3],"%)") })
   
-
+  
   plotAlter<-reactive({
     
     zustand<-rep(c( "davon Todesfälle", "Infektionen"))
@@ -734,11 +745,11 @@ server <- function(input, output) {
     zahlen<-rep(c(var_age()[2], var_age()[1]-minuend)) ## für minuend, siehe variable oben
     frame<-data.frame(zustand, zahlen)
     return (ggplot(frame, aes(fill=zustand, y=zahlen, x=stringAltersrange))+  geom_bar(position='stack', stat='identity') + xlab("Anzahl Fälle")+ylab("Altersgruppe")+scale_fill_manual(values=c("#649be8", "#f58787")))
-
+    
   })
   
   output$VerhaeltnisAlter<-renderPlot({plotAlter()})
-
+  
   
   
   
@@ -760,7 +771,7 @@ server <- function(input, output) {
   # ------------------------------------------------------------------------------------- GET-COLOR-PALETTE
   # Erstellt und returns eine Farbpalette, die für die farbliche bar-Unterteilung im barPlotFallTot genutzt wird
   getColorPalette <- reactive({
-
+    
     # da im späteren barPlotFallTot die bars farblich unterteilt werden, braucht es bei vielen unterteilungen color-paletts
     # dafür nutze ich die brewer-paletten, siehe: https://rdrr.io/cran/RColorBrewer/man/ColorBrewer.html
     #
@@ -768,28 +779,28 @@ server <- function(input, output) {
     # beide sind allerdings nur 9 Farben lang, beim Merkmal "Landkreis" gibt es allerdings 12 Ausprägungen
     # in diesem Fall verlängere ich die Paletten mit der Funktion "colorRampPalette", siehe:
     # https://www.datanovia.com/en/blog/easy-way-to-expand-color-palettes-in-r/
-
+    
     # aus: https://htmlcolorcodes.com/
     if(input$varUnterteilungsArt == 2){return(c("#B7EA4B", "#4BD3EA", "#EA754B"))}
     
     # für switch-case, siehe: https://www.geeksforgeeks.org/switch-case-in-r/
     # warum mache ich alles immer erst zum character? --> weil es bei mir anders warum auch immer nicht funktioniert
     colorType <- switch(as.character(input$varUntersuchungsMerkmal),
-                    "1" = "Blues",
-                    "2" = "Reds")
-
+                        "1" = "Blues",
+                        "2" = "Reds")
+    
     numOfSubdivs <- switch(as.character(input$varUnterteilungsArt),
                            "1" = 12,
                            "2" = 3,
                            "3"= 7,
                            "4" = 4)
-
+    
     colorPalette <- colorRampPalette(brewer.pal(9, colorType))(as.numeric(numOfSubdivs))
     
     colorPalette[1] <- "#E3E3E3" #da die erste farbe nicht sichtbar genug ist
-    
+      
     return(colorPalette)
-
+    
   })
   
   # ------------------------------------------------------------------------------------- GET-DATA-FRAME
@@ -825,9 +836,9 @@ server <- function(input, output) {
     df <- getDataFrame()
     if(input$varBetrachtungsArt == 1) { #betrachtung von zeiteinheiten (wochen, monate, jahre)
       switch(as.character(input$varZeitEinheit),
-                          "1" = return(df$Woche),
-                          "2" = return(df$Monat),
-                          "3" = return(df$Jahr))
+             "1" = return(df$Woche),
+             "2" = return(df$Monat),
+             "3" = return(df$Jahr))
     }
     else { #betrachtung von merkmalen
       switch(as.character(input$varMerkmalEinheit),
@@ -858,7 +869,7 @@ server <- function(input, output) {
   
   # ------------------------------------------------------------------------------------- BUILD PLOT
   barPlotFallTot <- reactive({
-
+    
     updateSummary()
     
     # für folgendes code-Verständnis: siehe https://www.youtube.com/watch?v=n_ACYLWUmos
