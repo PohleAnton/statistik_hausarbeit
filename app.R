@@ -827,16 +827,7 @@ server <- function(input, output) {
       "13" = return ("A65")
     )
   })
-##ich nehme es mal mit auf
-  var_sk_deutsch<-reactive({
-    
-    switch(
-      as.character(input$SK_Deutsch),
-      "1" = return (TRUE),
-      "2" = return ("D"),
-      "3" = return ("A")
-    )
-  })
+
  
   
    
@@ -851,10 +842,11 @@ server <- function(input, output) {
     sub_faelle <- sum(base$AnzahlFall[base$Geschlecht==var_sex()&base$Landkreis==var_sk()])
     sub_tode<-sum(base$AnzahlTodesfall[base$Geschlecht==var_sex()&base$Landkreis==var_sk()])
     
-    if (var_sk() == 1) ({
+    if (var_sk() == "Berlin") ({
       einwohner<-sum(bevoelkerung$Gesamt[bevoelkerung$Geschlecht==var_sex()&bevoelkerung$Landkreis=="Berlin"])
-      sub_faelle<-sum(base$AnzahlFall[base$Geschlecht==var_sex()])
       sub_tode<-sum(base$AnzahlTodesfall[base$Geschlecht==var_sex()])
+      sub_faelle<-sum(base$AnzahlFall[base$Geschlecht==var_sex()])
+      
     })
     stringBezirke <-   switch(
       as.character(input$SK),
@@ -880,7 +872,7 @@ server <- function(input, output) {
    
     
   
-    zahlen_2<-rep(c(sub_tode, sub_faelle-sub_tode,einwohner-sub_faelle )) ## für minuend, siehe variable oben
+    zahlen_2<-rep(c(sub_tode, sub_faelle-sub_tode,einwohner )) ## für minuend, siehe variable oben
     frame_2<-data.frame(zustand_2, zahlen_2)
     return (ggplot(frame_2, aes(fill=zustand_2, y=zahlen_2, x=stringBezirke))+  geom_bar(position='stack', stat='identity') + xlab("Zahlenwerte")+ylab("Stadtteil")+scale_fill_manual(values=c("#000000","#649be8", "#f58787" )))
     
