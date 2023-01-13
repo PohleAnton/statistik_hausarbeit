@@ -36,7 +36,9 @@ bevoelkerung$Landkreis<-factor(bevoelkerung$Landkreis, levels= rev(c("SK Berlin 
                                                                      "SK Berlin Neukölln","SK Berlin Treptow-Köpenick","SK Berlin Marzahn-Hellersdorf",
                                                                      "SK Berlin Lichtenberg", "SK Berlin Reinickendorf",
                                                                      "Berlin")))
-summary(bevoelkerung)
+
+
+
 
 
 ##Daten über die Impfkampangne vom RKI, sortiert nach bundesländern:
@@ -625,7 +627,20 @@ ui <- fluidPage(
              plotOutput("tode_Woche")))
     
     
-  )
+  ),
+  br(),
+  br(),
+  h2("Infektionen, Todeszahlen, Geschlecht nach Stadtviertel"),
+  sidebarPanel(selectInput(inputId="SK", label="Stadteil",choices = list("Gesamt" = 1, "Mitte" = 2,"Friedrichshain-Kreuzberg"=3, "Pankow"=4,"Charlottenburg-Wilmersdorf"=5,"Spandau"=6,"Steglitz-Zehlendorf"=7,"Tempelhof-Schöneberg"=8,"Neukölln"=9, "Treptow-Köpenick"=10, "Marzahn-Hellersdorf"=11,"Lichtenberg"=12, "Reinickendorf"=13), selected = 1),
+               radioButtons("SK_Sex", label = "Männlich oder weiblich?", choices=list("männlich"=1, "weiblich"=2), selected = 2),
+               ),
+ 
+  mainPanel(
+    plotOutput("skplot"),
+    textOutput("TextTest")
+  ),
+  
+
 )
 
 
@@ -751,8 +766,88 @@ server <- function(input, output) {
   
   output$VerhaeltnisAlter<-renderPlot({plotAlter()})
   
+  ##Hier beginnt der Plot zu Stadtteil, Geschlecht, Todesfaelle etc.
+  ##das gewaehlte Geschlecht
   
+
+  var_sex<-reactive({
   
+    switch(
+      as.character(input$SK_Sex),
+      "1" = return ("M"),
+      "2" = return ("W")
+    )
+  })
+  
+  var_sk<-reactive({
+    switch(
+      as.character(input$SK),
+      "1" = return ("Berlin"),
+      "2" = return ("SK Berlin Mitte"),
+      "3" = return ("SK Berlin Friedrichshain-Kreuzberg"),
+      "4" = return ("SK Berlin Pankow"),
+      "5" = return ("SK Berlin Charlottenburg-Wilmersdorf"),
+      "6" = return ("SK Berlin Spandau"),
+      "7" = return ("SK Berlin Steglitz-Zehlendorf"),
+      "8" = return ("SK Berlin Tempelhof-Schöneberg"),
+      "9" = return ("SK Berlin Neukölln"),
+      "10" = return ("SK Berlin Treptow-Köpenick"),
+      "11" = return ("SK Berlin Marzahn-Hellersdorf"),
+      "12" = return ("SK Berlin Lichtenberg"),
+      "13" = return ("Reinickendorf")
+    )
+  })
+
+ 
+  
+   
+  ##nun der SK
+ 
+
+  plotSK<-reactive({
+    
+    einwohner<-sum(bevoelkerung$Gesamt[bevoelkerung$Geschlecht==var_sex()&bevoelkerung$Landkreis==var_sk()])
+    
+    
+    sub_faelle <- sum(base$AnzahlFall[base$Geschlecht==var_sex()&base$Landkreis==var_sk()])
+    sub_tode<-sum(base$AnzahlTodesfall[base$Geschlecht==var_sex()&base$Landkreis==var_sk()])
+    
+    if (var_sk() == 1) ({
+      einwohner<-sum(bevoelkerung$Gesamt[bevoelkerung$Geschlecht==var_sex()])
+      sub_faelle<-sum(base$AnzahlFall[base$Geschlecht==var_sex()])
+      sub_tode<-sum(base$AnzahlTodesfall[base$Geschlecht==var_sex()])
+    })
+    stringBezirke <-   switch(
+      as.character(input$SK),
+      "1" = "Ganz Berlin",
+      "2" = "SK Berlin Mitte",
+      "3" = "SK Berlin Friedrichshain-Kreuzberg",
+      "4" = "SK Berlin Pankow",
+      "5" = "SK Berlin Charlottenburg-Wilmersdorf",
+      "6" = "SK Berlin Spandau",
+      "7" = "SK Berlin Steglitz-Zehlendorf",
+      "8" = "SK Berlin Tempelhof-Schöneberg",
+      "9" = "SK Berlin Neukölln",
+      "10"= "SK Berlin Treptow-Köpenick",
+      "11"= "SK Berlin Marzahn-Hellersdorf",
+      "12"= "SK Berlin Lichtenberg",
+      "13"= "SK Berlin Reinickendorf"
+      
+    ) 
+    
+    zustand_2<-rep(c( "davon Todesfälle", "Infektionen", "Einwohner" ))
+    zustand_2<-factor(zustand_2, levels = c("Einwohner", "Infektionen", "davon Todesfälle" ))
+    
+   
+    
+  
+    zahlen_2<-rep(c(sub_tode, sub_faelle-sub_tode,einwohner-sub_faelle )) ## für minuend, siehe variable oben
+    frame_2<-data.frame(zustand_2, zahlen_2)
+    return (ggplot(frame_2, aes(fill=zustand_2, y=zahlen_2, x=stringBezirke))+  geom_bar(position='stack', stat='identity') + xlab("Zahlenwerte")+ylab("Stadtteil")+scale_fill_manual(values=c("#000000","#649be8", "#f58787" )))
+    
+  })
+
+  output$skplot<-renderPlot({plotSK()})
   
   
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
