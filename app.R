@@ -27,7 +27,7 @@ data$Refdatum<-as.Date(data$Refdatum)
 ## Die daten werden nun nach dem referenzdatum sortiert
 data <- data[order(data$Refdatum),]
 
-bevoelkerung<-read.csv2("./Data/bevoelkerung.csv", header = T, sep = ";")
+bevoelkerung<-read.csv2("./Data/bevoelkerungs.csv", header = T, sep = ";")
 bevoelkerung$Geschlecht <- factor(bevoelkerung$Geschlecht, levels = c("M", "W")) 
 bevoelkerung$Nationalität<-factor(bevoelkerung$Nationalität, levels=c("D","A"))
 bevoelkerung$Landkreis<-factor(bevoelkerung$Landkreis, levels= rev(c("SK Berlin Mitte","SK Berlin Friedrichshain-Kreuzberg","SK Berlin Pankow", 
@@ -36,6 +36,7 @@ bevoelkerung$Landkreis<-factor(bevoelkerung$Landkreis, levels= rev(c("SK Berlin 
                                                                      "SK Berlin Neukölln","SK Berlin Treptow-Köpenick","SK Berlin Marzahn-Hellersdorf",
                                                                      "SK Berlin Lichtenberg", "SK Berlin Reinickendorf",
                                                                      "Berlin")))
+summary(bevoelkerung)
 
 
 ##Daten über die Impfkampangne vom RKI, sortiert nach bundesländern:
