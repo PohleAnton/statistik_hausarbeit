@@ -600,7 +600,7 @@ ui <- fluidPage(
   
   br(),
   br(),
-  br(),
+  h2("Relation zwischen total verabreichten IMPFDOSEN und prozentualer TODESRATE nach Infektion"),
     sidebarPanel(      sliderInput(inputId="Woche", label="KalenderWoche", min=1, max=52, value=1),
                        radioButtons("Jahr", label="Welches Kalenderjahr soll betrachtet werden?", choices=list("2021"=1, "2022"=2), selected=1)),
     
@@ -733,7 +733,7 @@ server <- function(input, output) {
     
     zahlen<-rep(c(var_age()[2], var_age()[1]-minuend)) ## für minuend, siehe variable oben
     frame<-data.frame(zustand, zahlen)
-    return (ggplot(frame, aes(fill=zustand, y=zahlen, x=stringAltersrange))+  geom_bar(position='stack', stat='identity') + xlab("Anzahl Fälle")+ylab("Altersgruppe"))
+    return (ggplot(frame, aes(fill=zustand, y=zahlen, x=stringAltersrange))+  geom_bar(position='stack', stat='identity') + xlab("Anzahl Fälle")+ylab("Altersgruppe")+scale_fill_manual(values=c("#649be8", "#f58787")))
 
   })
   
