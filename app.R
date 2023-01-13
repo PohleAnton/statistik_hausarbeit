@@ -569,14 +569,17 @@ ui <- fluidPage(
   h2("Impfungen in Berlin - Covid19"),
   sidebarLayout(
     sidebarPanel(
-      sliderInput("varImpfJahr", label = "Jahr",
-                  min = 2020, max = 2023, value = 2021),
+      sliderInput("varImpfJahr", label = "Jahr (2000er)",
+                  min = 20, max = 23, value = 21),
       radioButtons("varImpfZeitEinheit", label = "Pro...",
                    choices = list("Woche" = 1, "Monat" = 2, "Jahr" = 3), selected = 1),
       checkboxInput("varImpfPercPlotBool", label = "Anteile der Unterteilungen abbilden", value = FALSE)
     ),
     mainPanel(plotOutput("barPlotImpf"))
   ),
+  br(),
+  br(),
+  h2("Relation: Anz. Infektionen und Anz. Todesfälle - im Bezug auf die Altersgruppe"),
 
   # ----------------------------------------------------------
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -602,8 +605,14 @@ ui <- fluidPage(
                        radioButtons("Jahr", label="Welches Kalenderjahr soll betrachtet werden?", choices=list("2021"=1, "2022"=2), selected=1)),
     
   mainPanel(
-    plotOutput("impfungen_Woche"),
-    plotOutput("tode_Woche")
+    fluidRow(
+      column(6, align="right",
+             plotOutput("impfungen_Woche")
+      ),
+      column(6, align="right",
+             plotOutput("tode_Woche")))
+    
+    
   )
 )
 
@@ -650,8 +659,8 @@ server <- function(input, output) {
   
   ##die y-Achsen sind hier unterschiedlich! Ich weiß nicht so recht, wie damit umzugehen - aktuell ist das 
   ##maximum immer der maximal vorkommende wert - so verhalten sich immerhin alle 3 Plots zu ihrem maximum (also quasi zu 100%)
-  output$impfungen_Woche<-renderPlot(barplot(main="Anzahl der INSGESAMT verabreichten Impfdosen bis vor 2 Wochen",var_jahr()[3],ylim=c(0,max(impfungen_b$Impfungen_Gesamt))))
-  output$tode_Woche<-renderPlot(barplot(main="Prozentualer Anteil Todesfälle ",var_jahr()[2],ylim=c(0,max(value_helper21, value_helper22))))
+  output$impfungen_Woche<-renderPlot(barplot(main="Anzahl der INSGESAMT verabreichten Impfdosen bis vor 2 Wochen",var_jahr()[3],ylim=c(0,max(impfungen_b$Impfungen_Gesamt)), col="#c5f587"))
+  output$tode_Woche<-renderPlot(barplot(main="Prozentualer Anteil Todesfälle ",var_jahr()[2],ylim=c(0,max(value_helper21, value_helper22)), col="#f58787"))
 
                          
   ##gibt reduzierte Datensätze zurück - im jeweiligen Zeitraum war die Variante mit >50% vertreten
@@ -928,10 +937,10 @@ server <- function(input, output) {
   
   getImpfDF <- reactive({
     switch(as.character(input$varImpfJahr),
-           "2020" = return(impf20),
-           "2021" = return(impf21),
-           "2022" = return(impf22),
-           "2023" = return(impf23))
+           "20" = return(impf20),
+           "21" = return(impf21),
+           "22" = return(impf22),
+           "23" = return(impf23))
   })
   
   getImpfX <- reactive({
