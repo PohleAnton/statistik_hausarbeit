@@ -1032,54 +1032,22 @@ server <- function(input, output) {
     # aber nur bei factors funktioniert (also bei uns bei Monaten und Varianten)
     # ich weiß nicht ob es sinn macht alles plötzlich deshalb zu factors umzuwandeln, da der flip nicht so schlimm ist, lasse ich es daher so
     
-    if(input$varFlipBool == TRUE) { #falls diagramm geflippt werden soll
-      if(input$varPercPlotBool == TRUE) { #falls die anteile abgebildet werden sollen
-        return(getDataFrame() %>% 
-                 ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
-                 # für geom_col, siehe: https://r-graphics.org/recipe-bar-graph-proportional-stacked-bar
-                 geom_col(position = "fill") + #diese line macht bei verzweigung 2 den unterschied (sie ersetzt "geom_bar")
-                 scale_y_continuous(labels = scales::percent) +
-                 coord_flip() + #diese line macht bei verzweigung-1 den unterschied
-                 theme_minimal() +
-                 labs(x = "x",
-                      y = "y", 
-                      title = "Title") + 
-                 scale_fill_manual(values = getColorPalette()))
-      }
-      else { #falls nicht die anteile abgebildet werden sollen
-        return(getDataFrame() %>% 
-                 ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
-                 geom_bar(stat = "identity") +
-                 coord_flip() + #diese line macht den unterschied
-                 theme_minimal() +
-                 labs(x = "x",
-                      y = "y", 
-                      title = "Title") + 
-                 scale_fill_manual(values = getColorPalette()))
-      }
+    barPlot <- getDataFrame() %>%
+      ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt()))
+    if(input$varPercPlotBool == TRUE){
+      barPlot <- barPlot + geom_col(position = "fill")
+    } else{
+      barPlot <- barPlot + geom_bar(stat = "identity")
     }
-    else { #wenn das Diagramm nicht geflippt sein soll
-      if(input$varPercPlotBool == TRUE) { #falls die anteile abgebildet werden sollen
-        return(getDataFrame() %>% 
-                 ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
-                 geom_col(position = "fill") + #diese line macht bei verzweigung 2 den unterschied (sie ersetzt "geom_bar")
-                 theme_minimal() +
-                 labs(x = "x",
-                      y = "y", 
-                      title = "Title") + 
-                 scale_fill_manual(values = getColorPalette()))
-      }
-      else { #falls nicht die anteile abgebildet werden sollen
-        return(getDataFrame() %>% 
-                 ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt())) +
-                 geom_bar(stat = "identity") +
-                 theme_minimal() +
-                 labs(x = "x",
-                      y = "y", 
-                      title = "Title") + 
-                 scale_fill_manual(values = getColorPalette()))
-      }
+    if(input$varFlipBool == TRUE){
+      barPlot <- barPlot + coord_flip()
     }
+    barPlot <- barPlot + theme_minimal() +
+      labs(x = "x", y = "y", title = "Title") + 
+      scale_fill_manual(values = getColorPalette())
+    
+    return(barPlot)
+    
     
     # es gibt leider bei den stacked percentage barplots manchmal probleme (die bars extenden zu -100%)
     # nach: https://stackoverflow.com/questions/13734368/ggplot2-and-a-stacked-bar-chart-with-negative-values
