@@ -897,7 +897,7 @@ server <- function(input, output) {
   
     zahlen_2<-rep(c(sub_tode, sub_faelle-sub_tode,einwohner )) ## für minuend, siehe variable oben
     frame_2<-data.frame(zustand_2, zahlen_2)
-    return (ggplot(frame_2, aes(fill=zustand_2, y=zahlen_2, x=stringBezirke))+  geom_bar(position='stack', stat='identity') + ylab("Zahlen für die gewaehlte Altersgruppe")+xlab("Stadtteil")+scale_fill_manual(values=c("#000000","#649be8", "#f58787" )))
+    return (ggplot(frame_2, aes(fill=zustand_2, y=zahlen_2, x=stringBezirke))+  geom_bar(position='dodge', stat='identity') + ylab("Zahlen für die gewaehlte Altersgruppe")+xlab("Stadtteil")+scale_fill_manual(values=c("#a3a3a3","#649be8", "#f58787" )))
     
   })
   
