@@ -15,7 +15,7 @@ library(plyr)
 library(dplyr)
 library(assertive.base)
 library(RColorBrewer)
-library(ggpp)
+#library(ggpp)
 
 
 
@@ -642,7 +642,6 @@ ui <- fluidPage(
   ),
   br(),
   br(),
-  h2("Relation: Anz. Infektionen und Anz. Todesfälle - im Bezug auf die Altersgruppe"),
   
   # ----------------------------------------------------------
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -650,7 +649,7 @@ ui <- fluidPage(
   
   
   
-  
+  h2("Todesrate nach Infektion"),
   sidebarPanel(
     selectInput("Altersgruppe", label="Wählen Sie eine Altersgruppe", choices = list("unbekannt"=1, "0 bis 4 Jahre"=2,"5 bis 14 Jahre"=3, "15 bis 34 Jahre"=4,"35 bis 59 Jahre"=5,"60 bis 79 Jahre"=6,"über 80 Jahre"=7, "Gesamt"=8), selected = 8),
     radioButtons("Variante", label="Welche Virusvariante soll betrachtet werden?", choices = list("Urtyp"=1, "Alpha"=2, "Delta"=3, "Omikron"=4, "Alle zusammen"=5), selected = 5)
@@ -898,7 +897,7 @@ server <- function(input, output) {
     
     zahlen_2<-rep(c(sub_tode, sub_faelle,einwohner )) ## für minuend, siehe variable oben
     frame_2<-data.frame(zustand_2, zahlen_2)
-    return (ggplot(frame_2, aes(fill=zustand_2, y=zahlen_2, x=stringBezirke))+  geom_bar(position='dodge', stat='identity') + ylab("Zahlen für die gewaehlte Altersgruppe")+xlab("Stadtteil")+scale_fill_manual(values=c("#a3a3a3","#649be8", "#f58787" )))
+    return (ggplot(frame_2, aes(fill=zustand_2, y=zahlen_2, x=stringBezirke))+  geom_bar(position='dodge', stat='identity') + ylab("Zahlen für die gewaehlte Altersgruppe")+xlab("Stadtteil")+scale_fill_manual(values=c("#ffdc6b","#649be8", "#f58787" )))
     
   })
   
@@ -1095,6 +1094,21 @@ server <- function(input, output) {
   # was hat es mit "height" auf sich? siehe: https://stackoverflow.com/questions/17838709/scale-and-size-of-plot-in-rstudio-shiny}
   output$barPlotFallTot <- renderPlot({return(barPlotFallTot())}, height = 670)
   
+  
+  
+  # aggregate(AnzahlFall ~ Woche + Altersgruppe, FUN = sum, data = d21) %>% # multiple cols: https://www.statology.org/r-aggregate-multiple-columns/
+  #   ggplot(aes(x = Woche, y = AnzahlFall, fill = Altersgruppe, label = AnzahlFall)) +
+  #   geom_col(position = "fill") +
+  #   geom_text(check_overlap = TRUE, size = 2, position = position_fill(vjust = 0.5)) + # repel: https://statisticsglobe.com/avoid-overlap-text-labels-ggplot2-plot-r
+  #   theme_minimal() +
+  #   labs(x = "x", y = "y", title = "title") +
+  #   scale_fill_brewer(palette = "Blues")
+  # 
+  # 
+  # 
+  #   getData <- reactive({
+  #   
+  # })
   
   
   
