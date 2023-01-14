@@ -43,12 +43,50 @@ bev_age<-read.csv2("./Data/bev_neu.csv", header = T, sep = ";")
 bev_age$Geschlecht <- factor(bev_age$Geschlecht, levels = c("M", "W")) 
 bev_age$Nationalität<-factor(bev_age$Nationalität, levels=c("D","A"))
 bev_age$Landkreis<-factor(bev_age$Landkreis, levels= rev(c("SK Berlin Mitte","SK Berlin Friedrichshain-Kreuzberg","SK Berlin Pankow", 
-                                                                     "SK Berlin Charlottenburg-Wilmersdorf", "SK Berlin Spandau",  
-                                                                     "SK Berlin Steglitz-Zehlendorf","SK Berlin Tempelhof-Schöneberg", 
-                                                                     "SK Berlin Neukölln","SK Berlin Treptow-Köpenick","SK Berlin Marzahn-Hellersdorf",
-                                                                     "SK Berlin Lichtenberg", "SK Berlin Reinickendorf",
-                                                                     "Berlin")))
-bev_age$Altersgruppe<-factor(bev_age$Altersgruppe, levels=rev(c("A00-A05","A06-A14","A15-A17","A18-A19", "A20-A24","A25-A29","A30-A34","A35-A39","A40-A44","A45-A59","A60-A64","A65+" )))
+                                                           "SK Berlin Charlottenburg-Wilmersdorf", "SK Berlin Spandau",  
+                                                           "SK Berlin Steglitz-Zehlendorf","SK Berlin Tempelhof-Schöneberg", 
+                                                           "SK Berlin Neukölln","SK Berlin Treptow-Köpenick","SK Berlin Marzahn-Hellersdorf",
+                                                           "SK Berlin Lichtenberg", "SK Berlin Reinickendorf",
+                                                           "Berlin")))
+
+
+## hier werden die Altersgruppen der Bevölkerungsdaten und RKI Daten normiert. 
+##Diese Datensätze sollten nur im direkten Vergleich genutzt werden - das Rki
+##denkt sich sicher etwas bei seiner Klassifizierung
+base_bev <- data
+base_bev <- base_bev[,c('Refdatum', 'Landkreis', 'Geschlecht', 'Altersgruppe', 'AnzahlFall', 'AnzahlTodesfall')]
+base_bev$Geschlecht <- factor(base_bev$Geschlecht, levels = c("unbekannt", "M", "W"))
+base_bev$Landkreis <- factor(base_bev$Landkreis, levels = rev(c("SK Berlin Mitte","SK Berlin Friedrichshain-Kreuzberg","SK Berlin Pankow", 
+                                                                "SK Berlin Charlottenburg-Wilmersdorf", "SK Berlin Spandau",  
+                                                                "SK Berlin Steglitz-Zehlendorf","SK Berlin Tempelhof-Schöneberg", 
+                                                                "SK Berlin Neukölln","SK Berlin Treptow-Köpenick","SK Berlin Marzahn-Hellersdorf",
+                                                                "SK Berlin Lichtenberg", "SK Berlin Reinickendorf")))
+base_bev$Altersgruppe[base_bev$Altersgruppe=="A00-A04"]<-"A00-A14"
+base_bev$Altersgruppe[base_bev$Altersgruppe=="A05-A14"]<-"A00-A14"
+base_bev$Altersgruppe[base_bev$Altersgruppe=="A60-A79"]<-"A60+"
+base_bev$Altersgruppe[base_bev$Altersgruppe=="A80+"]<-"A60+"
+
+
+
+##nun bevoelkerungsdaten normieren:
+bev_age$Altersgruppe[bev_age$Altersgruppe=="A00-A05"]<-"A00-A14"
+bev_age$Altersgruppe[bev_age$Altersgruppe=="A06-A14"]<-"A00-A14"
+bev_age$Altersgruppe[bev_age$Altersgruppe=="A15-A17"]<-"A15-A34"
+bev_age$Altersgruppe[bev_age$Altersgruppe=="A18-A19"]<-"A15-A34"
+bev_age$Altersgruppe[bev_age$Altersgruppe=="A20-A24"]<-"A15-A34"
+bev_age$Altersgruppe[bev_age$Altersgruppe=="A25-A29"]<-"A15-A34"
+bev_age$Altersgruppe[bev_age$Altersgruppe=="A30-A34"]<-"A15-A34"
+bev_age$Altersgruppe[bev_age$Altersgruppe=="A35-A39"]<-"A35-A59"
+bev_age$Altersgruppe[bev_age$Altersgruppe=="A40-A44"]<-"A35-A59"
+bev_age$Altersgruppe[bev_age$Altersgruppe=="A45-A59"]<-"A35-A59"
+bev_age$Altersgruppe[bev_age$Altersgruppe=="A60-A64"]<-"A60+"
+bev_age$Altersgruppe[bev_age$Altersgruppe=="A65+"]<-"A60+"
+
+
+
+
+ 
+
 
 
 ##Daten über die Impfkampangne vom RKI, sortiert nach bundesländern:
@@ -641,14 +679,16 @@ ui <- fluidPage(
   br(),
   br(),
   h2("Infektionen, Todeszahlen, Geschlecht nach Stadtviertel"),
-  sidebarPanel(selectInput(inputId="SK", label="Stadteil",choices = list("Gesamt" = 1, "Mitte" = 2,"Friedrichshain-Kreuzberg"=3, "Pankow"=4,"Charlottenburg-Wilmersdorf"=5,"Spandau"=6,"Steglitz-Zehlendorf"=7,"Tempelhof-Schöneberg"=8,"Neukölln"=9, "Treptow-Köpenick"=10, "Marzahn-Hellersdorf"=11,"Lichtenberg"=12, "Reinickendorf"=13), selected = 1),
-               ##select(inputId="SK_Age", label="Altersgruppe", choices=list("Alle"=1, "A00-A05"=2, "A06-A14"=3,"A15-A17"=4, "A18-A19"=5, "A20-A24"=6,"A25-A29"=7,"A30-A34"=8,"A35-A39"=9,"A40-A44"=10,"A45-A59"=11, "A60-A64"=12,"A65+"=13),selected=1),
+  sidebarPanel(selectInput(inputId="SK", label="Stadteil",choices = list("Mitte" = 1,"Friedrichshain-Kreuzberg"=2, "Pankow"=3,"Charlottenburg-Wilmersdorf"=4,"Spandau"=5,"Steglitz-Zehlendorf"=6,"Tempelhof-Schöneberg"=7,"Neukölln"=8, "Treptow-Köpenick"=9, "Marzahn-Hellersdorf"=10,"Lichtenberg"=11, "Reinickendorf"=12), selected = 1),
+               selectInput(inputId="SK_Age", label="Altersgruppe", choices=list("A00-A14"=1, "A15-A34"=2,"A35-A59"=3, "A60+"=4),selected=4),
                radioButtons("SK_Sex", label = "Männlich oder weiblich?", choices=list("männlich"=1, "weiblich"=2), selected = 2)
 
                ),
  
   mainPanel(
+    textOutput("TextBezirk"),
     plotOutput("skplot")
+    
   )
   
 
@@ -793,38 +833,29 @@ server <- function(input, output) {
   var_sk<-reactive({
     switch(
       as.character(input$SK),
-      "1" = return ("Berlin"),
-      "2" = return ("SK Berlin Mitte"),
-      "3" = return ("SK Berlin Friedrichshain-Kreuzberg"),
-      "4" = return ("SK Berlin Pankow"),
-      "5" = return ("SK Berlin Charlottenburg-Wilmersdorf"),
-      "6" = return ("SK Berlin Spandau"),
-      "7" = return ("SK Berlin Steglitz-Zehlendorf"),
-      "8" = return ("SK Berlin Tempelhof-Schöneberg"),
-      "9" = return ("SK Berlin Neukölln"),
-      "10" = return ("SK Berlin Treptow-Köpenick"),
-      "11" = return ("SK Berlin Marzahn-Hellersdorf"),
-      "12" = return ("SK Berlin Lichtenberg"),
-      "13" = return ("SK Berlin Reinickendorf")
+      "1" = return ("SK Berlin Mitte"),
+      "2" = return ("SK Berlin Friedrichshain-Kreuzberg"),
+      "3" = return ("SK Berlin Pankow"),
+      "4" = return ("SK Berlin Charlottenburg-Wilmersdorf"),
+      "5" = return ("SK Berlin Spandau"),
+      "6" = return ("SK Berlin Steglitz-Zehlendorf"),
+      "7" = return ("SK Berlin Tempelhof-Schöneberg"),
+      "8" = return ("SK Berlin Neukölln"),
+      "9" = return ("SK Berlin Treptow-Köpenick"),
+      "10" = return ("SK Berlin Marzahn-Hellersdorf"),
+      "11" = return ("SK Berlin Lichtenberg"),
+      "12" = return ("SK Berlin Reinickendorf")
     )
   })
-  ##derzeit nicht benutzt, wenn man das alter wollte
+
   var_sk_age<-reactive({
     switch(
-      as.character(input$SK),
-      "1" = return ("Alle"),
-      "2" = return ("A00-A05"),
-      "3" = return ("A06-A14"),
-      "4" = return ("A15-A17"),
-      "5" = return ("A18-A19"),
-      "6" = return ("A20-A24"),
-      "7" = return ("A25-A29"),
-      "8" = return ("A30-A34"),
-      "9" = return ("A35-A39"),
-      "10" = return ("A40-A44"),
-      "11" = return ("A45-A59"),
-      "12" = return ("A60-A64"),
-      "13" = return ("A65")
+      as.character(input$SK_Age),
+
+      "1" = return ("A00-A14"),
+      "2" = return ("A15-A34"),
+      "3" = return ("A35-A59"),
+      "4" = return ("A60+")
     )
   })
 
@@ -836,33 +867,25 @@ server <- function(input, output) {
 
   plotSK<-reactive({
     
-    einwohner<-sum(bevoelkerung$Gesamt[bevoelkerung$Geschlecht==var_sex()&bevoelkerung$Landkreis==var_sk()])
+    einwohner<-sum(bev_age$Personen[bev_age$Geschlecht==var_sex()&bev_age$Landkreis==var_sk()&bev_age$Altersgruppe==var_sk_age()])
+    sub_faelle <- sum(base_bev$AnzahlFall[base_bev$Geschlecht==var_sex()&base_bev$Landkreis==var_sk()&base_bev$Altersgruppe==var_sk_age()])
+    sub_tode<-sum(base_bev$AnzahlTodesfall[base_bev$Geschlecht==var_sex()&base_bev$Landkreis==var_sk()&base_bev$Altersgruppe==var_sk_age()])
     
-    
-    sub_faelle <- sum(base$AnzahlFall[base$Geschlecht==var_sex()&base$Landkreis==var_sk()])
-    sub_tode<-sum(base$AnzahlTodesfall[base$Geschlecht==var_sex()&base$Landkreis==var_sk()])
-    
-    if (var_sk() == "Berlin") ({
-      einwohner<-sum(bevoelkerung$Gesamt[bevoelkerung$Geschlecht==var_sex()&bevoelkerung$Landkreis=="Berlin"])
-      sub_tode<-sum(base$AnzahlTodesfall[base$Geschlecht==var_sex()])
-      sub_faelle<-sum(base$AnzahlFall[base$Geschlecht==var_sex()])
-      
-    })
+  
     stringBezirke <-   switch(
       as.character(input$SK),
-      "1" = "Ganz Berlin",
-      "2" = "SK Berlin Mitte",
-      "3" = "SK Berlin Friedrichshain-Kreuzberg",
-      "4" = "SK Berlin Pankow",
-      "5" = "SK Berlin Charlottenburg-Wilmersdorf",
-      "6" = "SK Berlin Spandau",
-      "7" = "SK Berlin Steglitz-Zehlendorf",
-      "8" = "SK Berlin Tempelhof-Schöneberg",
-      "9" = "SK Berlin Neukölln",
-      "10"= "SK Berlin Treptow-Köpenick",
-      "11"= "SK Berlin Marzahn-Hellersdorf",
-      "12"= "SK Berlin Lichtenberg",
-      "13"= "SK Berlin Reinickendorf"
+      "1" = "SK Berlin Mitte",
+      "2" = "SK Berlin Friedrichshain-Kreuzberg",
+      "3" = "SK Berlin Pankow",
+      "4" = "SK Berlin Charlottenburg-Wilmersdorf",
+      "5" = "SK Berlin Spandau",
+      "6" = "SK Berlin Steglitz-Zehlendorf",
+      "7" = "SK Berlin Tempelhof-Schöneberg",
+      "8" = "SK Berlin Neukölln",
+      "9"= "SK Berlin Treptow-Köpenick",
+      "10"= "SK Berlin Marzahn-Hellersdorf",
+      "11"= "SK Berlin Lichtenberg",
+      "12"= "SK Berlin Reinickendorf"
       
     ) 
     
@@ -874,11 +897,12 @@ server <- function(input, output) {
   
     zahlen_2<-rep(c(sub_tode, sub_faelle-sub_tode,einwohner )) ## für minuend, siehe variable oben
     frame_2<-data.frame(zustand_2, zahlen_2)
-    return (ggplot(frame_2, aes(fill=zustand_2, y=zahlen_2, x=stringBezirke))+  geom_bar(position='stack', stat='identity') + xlab("Zahlenwerte")+ylab("Stadtteil")+scale_fill_manual(values=c("#000000","#649be8", "#f58787" )))
+    return (ggplot(frame_2, aes(fill=zustand_2, y=zahlen_2, x=stringBezirke))+  geom_bar(position='stack', stat='identity') + ylab("Zahlen für die gewaehlte Altersgruppe")+xlab("Stadtteil")+scale_fill_manual(values=c("#000000","#649be8", "#f58787" )))
     
   })
-
+  
   output$skplot<-renderPlot({plotSK()})
+  output$TextBezirk<-renderText({paste0("Einwohner im Bezirk: ", sum(bev_age$Personen[bev_age$Geschlecht==var_sex()&bev_age$Landkreis==var_sk()&bev_age$Altersgruppe==var_sk_age()]), " Infektionen im Bezirk: ",  sum(base_bev$AnzahlFall[base_bev$Geschlecht==var_sex()&base_bev$Landkreis==var_sk()&base_bev$Altersgruppe==var_sk_age()]), " Davon Todesfälle: ",sum(base_bev$AnzahlTodesfall[base_bev$Geschlecht==var_sex()&base_bev$Landkreis==var_sk()&base_bev$Altersgruppe==var_sk_age()])) })
   
   
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
