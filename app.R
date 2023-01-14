@@ -86,7 +86,7 @@ bev_age$Altersgruppe[bev_age$Altersgruppe=="A65+"]<-"A60+"
 
 
 
- 
+
 
 
 
@@ -683,16 +683,16 @@ ui <- fluidPage(
   sidebarPanel(selectInput(inputId="SK", label="Stadteil",choices = list("Mitte" = 1,"Friedrichshain-Kreuzberg"=2, "Pankow"=3,"Charlottenburg-Wilmersdorf"=4,"Spandau"=5,"Steglitz-Zehlendorf"=6,"Tempelhof-Schöneberg"=7,"Neukölln"=8, "Treptow-Köpenick"=9, "Marzahn-Hellersdorf"=10,"Lichtenberg"=11, "Reinickendorf"=12), selected = 1),
                selectInput(inputId="SK_Age", label="Altersgruppe", choices=list("A00-A14"=1, "A15-A34"=2,"A35-A59"=3, "A60+"=4),selected=4),
                radioButtons("SK_Sex", label = "Männlich oder weiblich?", choices=list("männlich"=1, "weiblich"=2), selected = 2)
-
-               ),
- 
+               
+  ),
+  
   mainPanel(
     textOutput("TextBezirk"),
     plotOutput("skplot")
     
   )
   
-
+  
 )
 
 
@@ -821,9 +821,9 @@ server <- function(input, output) {
   ##Hier beginnt der Plot zu Stadtteil, Geschlecht, Todesfaelle etc.
   ##das gewaehlte Geschlecht
   
-
-  var_sex<-reactive({
   
+  var_sex<-reactive({
+    
     switch(
       as.character(input$SK_Sex),
       "1" = return ("M"),
@@ -848,31 +848,31 @@ server <- function(input, output) {
       "12" = return ("SK Berlin Reinickendorf")
     )
   })
-
+  
   var_sk_age<-reactive({
     switch(
       as.character(input$SK_Age),
-
+      
       "1" = return ("A00-A14"),
       "2" = return ("A15-A34"),
       "3" = return ("A35-A59"),
       "4" = return ("A60+")
     )
   })
-
- 
   
-   
+  
+  
+  
   ##nun der SK
- 
-
+  
+  
   plotSK<-reactive({
     
     einwohner<-sum(bev_age$Personen[bev_age$Geschlecht==var_sex()&bev_age$Landkreis==var_sk()&bev_age$Altersgruppe==var_sk_age()])
     sub_faelle <- sum(base_bev$AnzahlFall[base_bev$Geschlecht==var_sex()&base_bev$Landkreis==var_sk()&base_bev$Altersgruppe==var_sk_age()])
     sub_tode<-sum(base_bev$AnzahlTodesfall[base_bev$Geschlecht==var_sex()&base_bev$Landkreis==var_sk()&base_bev$Altersgruppe==var_sk_age()])
     
-  
+    
     stringBezirke <-   switch(
       as.character(input$SK),
       "1" = "SK Berlin Mitte",
@@ -893,10 +893,10 @@ server <- function(input, output) {
     zustand_2<-rep(c( "davon Todesfälle", "Infektionen", "Einwohner" ))
     zustand_2<-factor(zustand_2, levels = c("Einwohner", "Infektionen", "davon Todesfälle" ))
     
-   
     
-  
-    zahlen_2<-rep(c(sub_tode, sub_faelle-sub_tode,einwohner )) ## für minuend, siehe variable oben
+    
+    
+    zahlen_2<-rep(c(sub_tode, sub_faelle,einwohner )) ## für minuend, siehe variable oben
     frame_2<-data.frame(zustand_2, zahlen_2)
     return (ggplot(frame_2, aes(fill=zustand_2, y=zahlen_2, x=stringBezirke))+  geom_bar(position='dodge', stat='identity') + ylab("Zahlen für die gewaehlte Altersgruppe")+xlab("Stadtteil")+scale_fill_manual(values=c("#a3a3a3","#649be8", "#f58787" )))
     
