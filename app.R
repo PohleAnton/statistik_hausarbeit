@@ -624,7 +624,6 @@ ui <- fluidPage(
       tabsetPanel(
         tabPanel("Diagramm", plotOutput("barPlotFallTot")),
         tabPanel("Zusammenfassung", verbatimTextOutput("zusammenfassung")),
-        tabPanel("Beschreibung", textOutput("beschreibung"))
       )
     ),
     position = c("left", "right"),
