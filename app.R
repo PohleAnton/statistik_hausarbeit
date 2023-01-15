@@ -15,7 +15,6 @@ library(plyr)
 library(dplyr)
 library(assertive.base)
 library(RColorBrewer)
-#library(ggpp)
 
 
 
@@ -612,7 +611,7 @@ ui <- fluidPage(
       radioButtons("varUnterteilungsArt", label = "Wonach sollen die Ausprägungen unterteilt sein?",
                    choices = list("Landkreis" = 2, "Geschlecht" = 3, "Altersgruppe" = 4, "Variante" = 10), selected = 2),
       h5("━━━━━━━━━━"),
-      checkboxInput("varEnableValuesBool", label = "Balken-Werte zeigen", value = FALSE),
+      checkboxInput("varEnableValuesBool", label = "Werte anzeigen", value = FALSE),
       checkboxInput("varPercPlotBool", label = "Anteile der Unterteilungen untersuchen", value = FALSE),
       checkboxInput("varFlipBool", label = "Flip Diagramm (kann Beschriftungen besser sichtbar machen)", value = FALSE)
     ),
@@ -1011,8 +1010,6 @@ server <- function(input, output) {
     # https://stackoverflow.com/questions/34227967/reversed-order-after-coord-flip-in-r
     # aber nur bei factors funktioniert (also bei uns bei Monaten und Varianten)
     # ich weiß nicht ob es sinn macht alles plötzlich deshalb zu factors umzuwandeln, da der flip nicht so schlimm ist, lasse ich es daher so
-    # man könnte sonst auch die labels sich gegenseitig dodgen lassen, siehe: https://statisticsglobe.com/avoid-overlapping-axis-labels-r
-    # aber der flip gefällt mir mehr
     
     barPlot <- getDataFrame() %>%
       ggplot(aes(x = getDataFrame()[,1], y = getDataFrame()[,3], fill = getDataFrame()[,2], label = getDataFrame()[,3]))
@@ -1029,6 +1026,10 @@ server <- function(input, output) {
     if(input$varEnableValuesBool == TRUE & input$varPercPlotBool == FALSE){
       barPlot <- barPlot + geom_text(check_overlap = TRUE, size = 3, position = position_stack(vjust = 0.5))
     }
+    if(input$varBetrachtungsArt == 2 & input$varMerkmalEinheit == 2){
+      barPlot <- barPlot + scale_x_discrete(guide=guide_axis(n.dodge=2))
+    } # scale_x_discrete damit bei landkreisen keine überlappungen der labels entstehen
+    # code aus: https://statisticsglobe.com/avoid-overlapping-axis-labels-r
     if(input$varFlipBool == TRUE){
       barPlot <- barPlot + coord_flip()
     }
