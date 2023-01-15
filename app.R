@@ -123,94 +123,6 @@ impfungen_b <-cbind(impfungen_b, Impfungen_Gesamt=impfdosenTotal)
 
 
 
-## GRUNDSAETZLICHE FESTLEGUNGEN:
-## Wenn wir Covid Faelle untersuchen, gehen wir immer vom Refdatum aus
-## Wenn wir Impfungen untersuchen, danach aggregieren etc. verwenden wir immer die totalen Impfdosen verabreicht, nicht die Anzahl der erhaltenen Impfungen
-
-
-
-
-
-
-
-
-
-
-
-
-##Ist das nach New Data Approach noch nötig=
-
-## UNTERSUCHUNG: IMPFUNGEN PRO TAG/WOCHE FUER 20/21/22 (+ Ermittlung von Maximalwerten):
-## 2020
-aggImpfsPerDay20 <- aggregate(Anzahl ~ Impfdatum, FUN = sum, data = impfungen_b[impfungen_b$Jahr==2020,])
-aggImpfsPerWeek20 <- aggregate(Anzahl ~ Woche, FUN = sum, data = impfungen_b[impfungen_b$Jahr==2020,])
-
-maxImpfsPerDay20 <- max(aggImpfsPerDay20$Anzahl)
-maxImpfsPerWeek20 <- max(aggImpfsPerWeek20$Anzahl)
-
-## 2021
-aggImpfsPerDay21 <- aggregate(Anzahl ~ Impfdatum, FUN = sum, data = impfungen_b[impfungen_b$Jahr==2021,])
-aggImpfsPerWeek21 <- aggregate(Anzahl ~ Woche, FUN = sum, data = impfungen_b[impfungen_b$Jahr==2021,])
-
-maxImpfsPerDay21 <- max(aggImpfsPerDay21$Anzahl)
-maxImpfsPerWeek21 <- max(aggImpfsPerWeek21$Anzahl)
-
-## 2022
-aggImpfsPerDay22<-aggregate(Anzahl ~ Impfdatum, FUN = sum, data = impfungen_b[impfungen_b$Jahr==2022,])
-aggImpfsPerWeek22<-aggregate(Anzahl ~ Woche, FUN = sum, data = impfungen_b[impfungen_b$Jahr==2022,])
-
-maxImpfsPerDay22 <- max(aggImpfsPerDay22$Anzahl)
-maxImpfsPerWeek22 <- max(aggImpfsPerWeek22$Anzahl)
-
-## 2023
-aggImpfsPerDay23<-aggregate(Anzahl ~ Impfdatum, FUN = sum, data = impfungen_b[impfungen_b$Jahr==2023,])
-aggImpfsPerWeek23<-aggregate(Anzahl ~ Woche, FUN = sum, data = impfungen_b[impfungen_b$Jahr==2023,])
-
-maxImpfsPerDay23 <- max(aggImpfsPerDay22$Anzahl)
-maxImpfsPerWeek23 <- max(aggImpfsPerWeek22$Anzahl)
-
-##diese hier könnten genügen
-aggImpfsPerDayTotal<-aggregate(Anzahl~Impfdatum,  FUN = sum, data = impfungen_b)
-aggImpfsPerWeekTotal <- aggregate(Anzahl ~ Woche, FUN = sum, data = impfungen_b)
-maxImpfsPerDayTotal <- max(aggImpfsPerDayTotal$Anzahl)
-maxImpfsPerWeekTotal <- max(aggImpfsPerWeekTotal$Anzahl)
-
-
-
-
-
-
-
-
-
-
-
-## UNTERTEILUNG DER COVID DATEN IN DIE VERSCHIEDENEN COVID-VARIANTEN (ausgehend von den Zeitraeumen, in denen jeweilige Variante vorherrschend war)
-## gemäß
-## https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/VOC_VOI_Tabelle.xlsx?__blob=publicationFile
-## wird folgendes angenommen:
-## KW09/2021-KW24/2021: Alpha ist vorherrschend
-## KW25/2021-KW51/2021: Delta ist vorherrschend
-## ab KW52/2021: Omikron- vorerst keine weitere Unterscheidung der Subtypen
-##vorherrschend heißt >50%
-
-data_urtyp<-data[data$Refdatum < '2021-03-01',]
-data_alpha<-data[data$Refdatum > '2021-02-28' & data$Refdatum < '2021-06-21',]
-data_delta<-data[data$Refdatum > '2021-06-21' & data$Refdatum < '2021-12-27',]
-data_ominkron<-data[data$Refdatum > '2021-12-26',]
-
-
-
-
-
-
-
-## UNTERSUCHUNG: DISKREPANZ ZWISCHEN MELDEDATUM UND REFERENZDATUM (ERKRANKUNGSBEGINN)
-meldeRefDiscrepency <- data$Meldedatum - data$Refdatum
-## maxDiscrepency
-maxMeldeRefDiscrepency <- max(meldeRefDiscrepency)
-
-
 
 
 
@@ -221,6 +133,10 @@ maxMeldeRefDiscrepency <- max(meldeRefDiscrepency)
 #
 # ----------------------------------------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## GRUNDSAETZLICHE FESTLEGUNGEN:
+## Wenn wir Covid Faelle untersuchen, gehen wir immer vom Refdatum aus
+## Wenn wir Impfungen untersuchen, danach aggregieren etc. verwenden wir immer die totalen Impfdosen verabreicht, nicht die Anzahl der erhaltenen Impfungen
 
 # Originaldaten als "base"
 base <- data
@@ -238,7 +154,7 @@ base$Landkreis <- factor(base$Landkreis, levels = rev(c("SK Berlin Mitte", "SK B
                                                         "SK Berlin Steglitz-Zehlendorf", "SK Berlin Lichtenberg", 
                                                         "SK Berlin Treptow-Köpenick", "SK Berlin Marzahn-Hellersdorf")))
 
-impf <- impfungen
+impf <- impfungen_b
 
 # ------------------------------------------------------------------------------------- WEITERE RELEVANTE MERKMALE ALS SPALTEN HINZUFÜGEN
 # ------------------------------------------------------------------------------------- wochenspalte
