@@ -610,9 +610,10 @@ ui <- fluidPage(
                      choices = list("Landkreis" = 2, "Geschlecht" = 3, "Altersgruppe" = 4, "Variante" = 10), selected = 2)
       ),
       radioButtons("varUnterteilungsArt", label = "Wonach sollen die Ausprägungen unterteilt sein?",
-                   choices = list("Landkreis" = 2, "Geschlecht" = 3, "Altersgruppe" = 4, "Variante" = 10), selected = 4),
+                   choices = list("Landkreis" = 2, "Geschlecht" = 3, "Altersgruppe" = 4, "Variante" = 10), selected = 2),
       h5("━━━━━━━━━━"),
-      checkboxInput("varPercPlotBool", label = "Anteile der Unterteilungen abbilden", value = FALSE),
+      checkboxInput("varEnableValuesBool", label = "Balken-Werte zeigen", value = FALSE),
+      checkboxInput("varPercPlotBool", label = "Anteile der Unterteilungen untersuchen", value = FALSE),
       checkboxInput("varFlipBool", label = "Flip Diagramm (kann Beschriftungen besser sichtbar machen)", value = FALSE)
     ),
     mainPanel(
@@ -932,7 +933,7 @@ server <- function(input, output) {
     # https://www.datanovia.com/en/blog/easy-way-to-expand-color-palettes-in-r/
     
     # aus: https://htmlcolorcodes.com/
-    if(input$varUnterteilungsArt == 2){return(c("#B7EA4B", "#4BD3EA", "#EA754B"))}
+    if(input$varUnterteilungsArt == 3){return(c("#B7EA4B", "#4BD3EA", "#EA754B"))}
     
     # für switch-case, siehe: https://www.geeksforgeeks.org/switch-case-in-r/
     # warum mache ich alles immer erst zum character? --> weil es bei mir anders warum auch immer nicht funktioniert
@@ -1014,11 +1015,19 @@ server <- function(input, output) {
     # aber der flip gefällt mir mehr
     
     barPlot <- getDataFrame() %>%
-      ggplot(aes(x = getDataFrame()[,1], y = getDataFrame()[,3], fill = getDataFrame()[,2]))
+      ggplot(aes(x = getDataFrame()[,1], y = getDataFrame()[,3], fill = getDataFrame()[,2], label = getDataFrame()[,3]))
     if(input$varPercPlotBool == TRUE){
       barPlot <- barPlot + geom_col(position = "fill")
     } else{
       barPlot <- barPlot + geom_bar(stat = "identity")
+    }
+    if(input$varEnableValuesBool == TRUE & input$varPercPlotBool == TRUE){
+      barPlot <- barPlot + geom_text(check_overlap = TRUE, size = 3, position = position_fill(vjust = 0.5))
+      # geom_text, siehe: https://stackoverflow.com/questions/6644997/showing-data-values-on-stacked-bar-chart-in-ggplot2
+      # check_overlap, siehe: https://ggplot2.tidyverse.org/reference/geom_text.html
+    }
+    if(input$varEnableValuesBool == TRUE & input$varPercPlotBool == FALSE){
+      barPlot <- barPlot + geom_text(check_overlap = TRUE, size = 3, position = position_stack(vjust = 0.5))
     }
     if(input$varFlipBool == TRUE){
       barPlot <- barPlot + coord_flip()
