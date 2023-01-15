@@ -745,7 +745,7 @@ server <- function(input, output) {
     
     zahlen<-rep(c(var_age()[2], var_age()[1]-minuend)) ## für minuend, siehe variable oben
     frame<-data.frame(zustand, zahlen)
-    return (ggplot(frame, aes(fill=zustand, y=zahlen, x=stringAltersrange))+  geom_bar(position='stack', stat='identity') + xlab("Anzahl Fälle")+ylab("Altersgruppe")+scale_fill_manual(values=c("#649be8", "#f58787")))
+    return (ggplot(frame, aes(fill=zustand, y=zahlen, x=stringAltersrange))+  geom_bar(position='stack', stat='identity') + xlab("Anzahl Fälle")+ylab("Altersgruppe")+ labs(fill="Legende")+scale_fill_manual(values=c("#649be8", "#f58787")))
     
   })
   
@@ -831,7 +831,7 @@ server <- function(input, output) {
     
     zahlen_2<-rep(c(sub_tode, sub_faelle,einwohner )) ## für minuend, siehe variable oben
     frame_2<-data.frame(zustand_2, zahlen_2)
-    return (ggplot(frame_2, aes(fill=zustand_2, y=zahlen_2, x=stringBezirke))+  geom_bar(position='dodge', stat='identity') + ylab("Zahlen für die gewaehlte Altersgruppe")+xlab("Stadtteil")+scale_fill_manual(values=c("#ffdc6b","#649be8", "#f58787" )))
+    return (ggplot(frame_2, aes(fill=zustand_2, y=zahlen_2, x=stringBezirke))+  geom_bar(position='dodge', stat='identity') + ylab("Zahlen für die gewaehlte Altersgruppe")+xlab("Stadtteil")+labs(fill = "Legende")+scale_fill_manual(values=c("#ffdc6b","#649be8", "#f58787" )))
     
   })
   
@@ -1044,8 +1044,8 @@ server <- function(input, output) {
                geom_col(position = "fill") +
                theme_minimal() +
                labs(x = "x",
-                    y = "y", 
-                    title = "Title") + 
+                    y = "Impfungen", 
+                    fill = "Legende") + 
                scale_fill_manual(values = rev(c("#006d2c", "#238b45", "#41ab5d", "#74c476", "#a1d99b", "#c7e9c0"))))
     }
     else {
@@ -1054,8 +1054,8 @@ server <- function(input, output) {
                geom_bar(stat = "identity") +
                theme_minimal() +
                labs(x = "x",
-                    y = "y", 
-                    title = "Title") + 
+                    y = "Impfungen", 
+                    fill = "Legende") + 
                scale_fill_manual(values = rev(c("#006d2c", "#238b45", "#41ab5d", "#74c476", "#a1d99b", "#c7e9c0"))))
     }
     
