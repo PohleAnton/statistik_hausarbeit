@@ -594,7 +594,8 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.varZeitraumArt == 2",
         radioButtons("varVariante", label = "Welche Covid-Variante soll betrachtet werden?",
-                     choices = list("Urtyp" = 1, "Alpha" = 2, "Delta"= 3, "Omikron" = 4), selected = 1)
+                     choices = list("Urtyp" = 1, "Alpha" = 2, "Delta"= 3, "Omikron" = 4), selected = 1),
+        p("Was hier abgebildet wird sind nicht die durch die Variante verursachten Fälle/Tode etc. Es wird einzig und allein der Zeitraum betrachtet, in dem jene Variante dominiert, bzw. über 50% der Fälle ausgemacht hat.  ")
       ),
       selectInput("varBetrachtungsArt", label = "Zeitlichen Verlauf oder bestimmtes Merkmal analysieren?",
                   choices = list("Zeit. Verlauf" = 1, "Merkmal" = 2)),
@@ -606,7 +607,10 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.varBetrachtungsArt == 2",
         radioButtons("varMerkmalEinheit", label = "Unterscheidung nach...",
-                     choices = list("Landkreis" = 2, "Geschlecht" = 3, "Altersgruppe" = 4, "Variante" = 10), selected = 2)
+                     choices = list("Landkreis" = 2, "Geschlecht" = 3, "Altersgruppe" = 4, "Variante" = 10), selected = 2),
+        conditionalPanel(
+          condition = "input.varMerkmalEinheit == 10", p("Die Unterteilung nach Variante zeigt nicht ide Fälle/Tode etc. pro Variante. Die Ausprägungen sind abhängig von der zum jeweiligen Zeitpunkt dominanten Variante (Variante macht über 50% der Fälle aus) gefärbt.")
+        )
       ),
       radioButtons("varUnterteilungsArt", label = "Wonach sollen die Ausprägungen unterteilt sein?",
                    choices = list("Landkreis" = 2, "Geschlecht" = 3, "Altersgruppe" = 4, "Variante" = 10), selected = 2),
