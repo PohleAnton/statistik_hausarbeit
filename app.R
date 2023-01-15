@@ -15,6 +15,7 @@ library(plyr)
 library(dplyr)
 library(assertive.base)
 library(RColorBrewer)
+library(rsconnect)
 
 
 
@@ -525,11 +526,14 @@ ui <- fluidPage(
         radioButtons("varMerkmalEinheit", label = "Unterscheidung nach...",
                      choices = list("Landkreis" = 2, "Geschlecht" = 3, "Altersgruppe" = 4, "Variante" = 10), selected = 2),
         conditionalPanel(
-          condition = "input.varMerkmalEinheit == 10", p("Die Unterteilung nach Variante zeigt nicht ide Fälle/Tode etc. pro Variante. Die Ausprägungen sind abhängig von der zum jeweiligen Zeitpunkt dominanten Variante (Variante macht über 50% der Fälle aus) gefärbt.")
+          condition = "input.varMerkmalEinheit == 10", p("Es werden hiermit nicht die genauen Fälle/Tode pro Variante gezeigt, sondern wie viele Fälle/Tode in den dominanten Phasen der jeweiligen Varianten aufgetreten sind.")
         )
       ),
       radioButtons("varUnterteilungsArt", label = "Wonach sollen die Ausprägungen unterteilt sein?",
                    choices = list("Landkreis" = 2, "Geschlecht" = 3, "Altersgruppe" = 4, "Variante" = 10), selected = 2),
+      conditionalPanel(
+        condition = "input.varUnterteilungsArt == 10", p("Die Unterteilung nach Variante zeigt nicht ide Fälle/Tode etc. pro Variante. Die Ausprägungen sind abhängig von der zum jeweiligen Zeitpunkt dominanten Variante (Variante macht über 50% der Fälle aus) gefärbt.")
+      ),
       h5("━━━━━━━━━━"),
       checkboxInput("varEnableValuesBool", label = "Werte anzeigen", value = FALSE),
       checkboxInput("varPercPlotBool", label = "Anteile der Unterteilungen untersuchen", value = FALSE),
@@ -927,6 +931,29 @@ server <- function(input, output) {
     }
   })
   
+  # ------------------------------------------------------------------------------------- GET X AND Y LABELS
+  getXlabel <- reactive({
+    if(as.character(input$varBetrachtungsArt) == "1") {
+      switch(as.character(input$varZeitEinheit),
+        "7" = return("Wochen"),
+        "8" = return("Monate"),
+        "9" = return("Jahre"))
+    }
+    else {
+      switch(as.character(input$varMerkmalEinheit),
+        "2" = return("Landkreis"),
+        "3" = return("Geschlecht"),
+        "4" = return("Altersgruppe"),
+        "10" = return("Variante"))
+    }
+  })
+  
+  getYlabel <- reactive({
+    switch(as.character(input$varUntersuchungsMerkmal),
+      "5" = return("Fälle"),
+      "6" = return("Todesfälle"))
+  })
+  
   # ------------------------------------------------------------------------------------- BUILD PLOT
   barPlotFallTot <- reactive({
     
@@ -964,7 +991,8 @@ server <- function(input, output) {
       barPlot <- barPlot + coord_flip()
     }
     barPlot <- barPlot + theme_minimal() +
-      labs(x = "x", y = "y", title = "Title") + 
+      labs(x = getXlabel(), y = getYlabel(), fill = "Legende") + 
+      # fill, aus: https://stackoverflow.com/questions/41649929/how-to-modify-a-legend-title-in-a-barplot-with-ggplot
       scale_fill_manual(values = getColorPalette())
     
     return(barPlot)
