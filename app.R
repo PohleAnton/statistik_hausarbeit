@@ -583,7 +583,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       radioButtons("varUntersuchungsMerkmal", label = "Sollen Fälle oder Todesfälle untersucht werden?",
-                   choices = list("Fälle" = 1, "Todesfälle" = 2), selected = 1),
+                   choices = list("Fälle" = 5, "Todesfälle" = 6), selected = 5),
       selectInput("varZeitraumArt", label = "Art des Zeitraums:",
                   choices = list("Jahr" = 1, "Covid-Variante" = 2), selected = 1),
       # conditional panels, siehe: https://shiny.rstudio.com/reference/shiny/1.6.0/conditionalpanel
@@ -602,15 +602,15 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.varBetrachtungsArt == 1",
         radioButtons("varZeitEinheit", label = "Unterscheidung nach...",
-                     choices = list("Wochen" = 1, "Monate" = 2, "Jahre" = 3), selected = 1)
+                     choices = list("Wochen" = 7, "Monate" = 8, "Jahre" = 9), selected = 7)
       ),
       conditionalPanel(
         condition = "input.varBetrachtungsArt == 2",
         radioButtons("varMerkmalEinheit", label = "Unterscheidung nach...",
-                     choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1)
+                     choices = list("Landkreis" = 2, "Geschlecht" = 3, "Altersgruppe" = 4, "Variante" = 10), selected = 2)
       ),
       radioButtons("varUnterteilungsArt", label = "Wonach sollen die Ausprägungen unterteilt sein?",
-                   choices = list("Landkreis" = 1, "Geschlecht" = 2, "Altersgruppe" = 3, "Variante" = 4), selected = 1),
+                   choices = list("Landkreis" = 2, "Geschlecht" = 3, "Altersgruppe" = 4, "Variante" = 10), selected = 4),
       h5("━━━━━━━━━━"),
       checkboxInput("varPercPlotBool", label = "Anteile der Unterteilungen abbilden", value = FALSE),
       checkboxInput("varFlipBool", label = "Flip Diagramm (kann Beschriftungen besser sichtbar machen)", value = FALSE)
@@ -937,14 +937,14 @@ server <- function(input, output) {
     # für switch-case, siehe: https://www.geeksforgeeks.org/switch-case-in-r/
     # warum mache ich alles immer erst zum character? --> weil es bei mir anders warum auch immer nicht funktioniert
     colorType <- switch(as.character(input$varUntersuchungsMerkmal),
-                        "1" = "Blues",
-                        "2" = "Reds")
+                        "5" = "Blues",
+                        "6" = "Reds")
     
     numOfSubdivs <- switch(as.character(input$varUnterteilungsArt),
-                           "1" = 12,
-                           "2" = 3,
-                           "3"= 7,
-                           "4" = 4)
+                           "2" = 12,
+                           "3" = 3,
+                           "4"= 7,
+                           "10" = 4)
     
     colorPalette <- colorRampPalette(brewer.pal(9, colorType))(as.numeric(numOfSubdivs))
     
@@ -957,7 +957,7 @@ server <- function(input, output) {
   # ------------------------------------------------------------------------------------- GET-DATA-FRAME
   getDataFrame <- reactive({
     
-    dFrame
+    dFrame <- d20
     
     if(input$varZeitraumArt == 1) { #falls jahre untersucht werden
       if(input$varBetrachtungsArt == 1 & input$varZeitEinheit == 1) { #falls x-achse nach wochen (dann ist der Zeitraum nicht genau das Jahr)
@@ -975,73 +975,26 @@ server <- function(input, output) {
     } 
     else { #wenn covid-varianten untersucht werden
       dFrame <- switch(as.character(input$varVariante),
-                     "1" = Urtyp,
+                     "1" = dUrtyp,
                      "2" = dAlpha,
                      "3" = dDelta,
                      "4" = dOmikron)}
-    
-    colIndex1 <- switch(as.character(input$varUntersuchungsMerkmal),
-                     "1" = 5,
-                     "2" = 6)
-    
-    colIndex2 <- 1
-    if(input$varBetrachtungsArt == 1) { #betrachtung von zeiteinheiten (wochen, monate, jahre)
-      colIndex2 <- switch(as.character(input$varZeitEinheit),
-                     "1" = 7,
-                     "2" = 8,
-                     "3" = 9)
-    }else { #betrachtung von merkmalen
-      colIndex2 <- switch(as.character(input$varMerkmalEinheit),
-                       "1" = 2,
-                       "2" = 3,
-                       "3" = 4,
-                       "4" = 10)}
-    
-    colIndex3 <- switch(as.character(input$varUnterteilungsArt),
-                      "1" = 2,
-                      "2" = 3,
-                      "3" = 4,
-                      "4" =10)
+
+    dFrame <- aggregate(dFrame[,as.numeric(input$varUntersuchungsMerkmal)] ~ dFrame[,as.numeric(getUnterteilung())] + dFrame[,as.numeric(input$varUnterteilungsArt)], FUN = sum, data = dFrame)
     
     # BSP: aggregate(AnzahlFall ~ Woche + Altersgruppe, FUN = sum, data = d21) %>% # multiple cols: https://www.statology.org/r-aggregate-multiple-columns/
-    return(aggregate(dFrame[,colIndex1] ~ dFrame[,colIndex2] + dFrame[,colIndex3], FUN = sum, data = dFrame))
+    return(dFrame)
     
   })
   
-  # ------------------------------------------------------------------------------------- GET-X-AXIS-ATTRIBUTE
-  getXatt <- reactive({ #att = attribute
-    df <- getDataFrame()
+  # ------------------------------------------------------------------------------------- GET-X-AXIS-ATTRIBUT-SPALTENINDEX
+  getUnterteilung <- reactive({ #att = attribute
     if(input$varBetrachtungsArt == 1) { #betrachtung von zeiteinheiten (wochen, monate, jahre)
-      switch(as.character(input$varZeitEinheit),
-             "1" = return(df$Woche),
-             "2" = return(df$Monat),
-             "3" = return(df$Jahr))
+      return(input$varZeitEinheit)
     }
     else { #betrachtung von merkmalen
-      switch(as.character(input$varMerkmalEinheit),
-             "1" = return(df$Landkreis),
-             "2" = return(df$Geschlecht),
-             "3" = return(df$Altersgruppe),
-             "4" = return(df$Variante))
+      return(input$varMerkmalEinheit)
     }
-  })
-  
-  # ------------------------------------------------------------------------------------- GET-Y-AXIS-ATTRIBUTE
-  getYatt <- reactive({
-    df <- getDataFrame()
-    switch(as.character(input$varUntersuchungsMerkmal),
-           "1" = return(df$AnzahlFall),
-           "2" = return(df$AnzahlTodesfall))
-  })
-  
-  # ------------------------------------------------------------------------------------- GET-UNTERTEILUNGS-ATT
-  getUnterteilungsAtt <- reactive({ #att = attribute
-    df <- getDataFrame()
-    switch(as.character(input$varUnterteilungsArt),
-           "1" = return(df[$Landkreis],),
-           "2" = return(df$Geschlecht),
-           "3" = return(df$Altersgruppe),
-           "4" = return(df$Variante))
   })
   
   # ------------------------------------------------------------------------------------- BUILD PLOT
@@ -1061,7 +1014,7 @@ server <- function(input, output) {
     # aber der flip gefällt mir mehr
     
     barPlot <- getDataFrame() %>%
-      ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt()))
+      ggplot(aes(x = getDataFrame()[,1], y = getDataFrame()[,3], fill = getDataFrame()[,2]))
     if(input$varPercPlotBool == TRUE){
       barPlot <- barPlot + geom_col(position = "fill")
     } else{
