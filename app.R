@@ -957,29 +957,55 @@ server <- function(input, output) {
   # ------------------------------------------------------------------------------------- GET-DATA-FRAME
   getDataFrame <- reactive({
     
+    dFrame
+    
     if(input$varZeitraumArt == 1) { #falls jahre untersucht werden
       if(input$varBetrachtungsArt == 1 & input$varZeitEinheit == 1) { #falls x-achse nach wochen (dann ist der Zeitraum nicht genau das Jahr)
-        switch(as.character(input$varJahr),
-               "1" = return(d20weeks),
-               "2" = return(d21weeks),
-               "3" = return(d22weeks),
-               "4" = return(d23weeks))
-      }
-      else { #wenn x-achse nicht nach wochen aufgeteilt ist
-        switch(as.character(input$varJahr),
-               "1" = return(d20),
-               "2" = return(d21),
-               "3" = return(d22),
-               "4" = return(d23))
-      }
-    }
+        dFrame <- switch(as.character(input$varJahr),
+                       "1" = d20weeks,
+                       "2" = d21weeks,
+                       "3" = d22weeks,
+                       "4" = d23weeks)
+      } else { #wenn x-achse nicht nach wochen aufgeteilt ist
+        dFrame <- switch(as.character(input$varJahr),
+                       "1" = d20,
+                       "2" = d21,
+                       "3" = d22,
+                       "4" = d23)}
+    } 
     else { #wenn covid-varianten untersucht werden
-      switch(as.character(input$varVariante),
-             "1" = return(dUrtyp),
-             "2" = return(dAlpha),
-             "3" = return(dDelta),
-             "4" = return(dOmikron))
-    }
+      dFrame <- switch(as.character(input$varVariante),
+                     "1" = Urtyp,
+                     "2" = dAlpha,
+                     "3" = dDelta,
+                     "4" = dOmikron)}
+    
+    colIndex1 <- switch(as.character(input$varUntersuchungsMerkmal),
+                     "1" = 5,
+                     "2" = 6)
+    
+    colIndex2 <- 1
+    if(input$varBetrachtungsArt == 1) { #betrachtung von zeiteinheiten (wochen, monate, jahre)
+      colIndex2 <- switch(as.character(input$varZeitEinheit),
+                     "1" = 7,
+                     "2" = 8,
+                     "3" = 9)
+    }else { #betrachtung von merkmalen
+      colIndex2 <- switch(as.character(input$varMerkmalEinheit),
+                       "1" = 2,
+                       "2" = 3,
+                       "3" = 4,
+                       "4" = 10)}
+    
+    colIndex3 <- switch(as.character(input$varUnterteilungsArt),
+                      "1" = 2,
+                      "2" = 3,
+                      "3" = 4,
+                      "4" =10)
+    
+    # BSP: aggregate(AnzahlFall ~ Woche + Altersgruppe, FUN = sum, data = d21) %>% # multiple cols: https://www.statology.org/r-aggregate-multiple-columns/
+    return(aggregate(dFrame[,colIndex1] ~ dFrame[,colIndex2] + dFrame[,colIndex3], FUN = sum, data = dFrame))
+    
   })
   
   # ------------------------------------------------------------------------------------- GET-X-AXIS-ATTRIBUTE
@@ -1012,7 +1038,7 @@ server <- function(input, output) {
   getUnterteilungsAtt <- reactive({ #att = attribute
     df <- getDataFrame()
     switch(as.character(input$varUnterteilungsArt),
-           "1" = return(df$Landkreis),
+           "1" = return(df[$Landkreis],),
            "2" = return(df$Geschlecht),
            "3" = return(df$Altersgruppe),
            "4" = return(df$Variante))
@@ -1031,6 +1057,8 @@ server <- function(input, output) {
     # https://stackoverflow.com/questions/34227967/reversed-order-after-coord-flip-in-r
     # aber nur bei factors funktioniert (also bei uns bei Monaten und Varianten)
     # ich weiß nicht ob es sinn macht alles plötzlich deshalb zu factors umzuwandeln, da der flip nicht so schlimm ist, lasse ich es daher so
+    # man könnte sonst auch die labels sich gegenseitig dodgen lassen, siehe: https://statisticsglobe.com/avoid-overlapping-axis-labels-r
+    # aber der flip gefällt mir mehr
     
     barPlot <- getDataFrame() %>%
       ggplot(aes(x = getXatt(), y = getYatt(), fill = getUnterteilungsAtt()))
@@ -1071,13 +1099,6 @@ server <- function(input, output) {
   #   theme_minimal() +
   #   labs(x = "x", y = "y", title = "title") +
   #   scale_fill_brewer(palette = "Blues")
-  # 
-  # 
-  # 
-  #   getData <- reactive({
-  #   
-  # })
-  
   
   
   getImpfDF <- reactive({
