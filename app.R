@@ -608,7 +608,18 @@ ui <- fluidPage(
     textOutput("TextBezirk"),
     plotOutput("skplot")
     
-  )
+  ),
+  br(),
+  br(),
+  h2("Quellen"),
+  h4("Impfdaten"),
+  p("Direkt vom RKI.",
+    "https://github.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/blob/master/Aktuell_Deutschland_Bundeslaender_COVID-19-Impfungen.csv"),
+  h4("Covid-Varianten"),
+  p("Ebenfalls vom RKI",
+    "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/VOC_VOI_Tabelle.xlsx?__blob=publicationFile"),
+  h4("Bevölkerungsdaten"),
+  p("https://download.statistik-berlin-brandenburg.de/31b0e1f55fbede61/0a9d61e4323b/SB_A01-05-00_2022h01_BE.xlsx")
   
   
 )
